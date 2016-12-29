@@ -1,10 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace ColoSearcher
 {
     public partial class Form1 : Form
     {
+        private readonly uint[] natures = { 100, 3, 2, 5, 20, 23, 11, 8, 13, 1, 16, 15, 14, 4, 17, 19, 7, 22, 10, 21, 9, 18, 6, 0, 24, 12 };
+        private readonly String[] Natures = { "Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky" };
+        private readonly String[] hiddenPowers = { "Fighting", "Flying", "Poison", "Ground", "Rock", "Bug", "Ghost", "Steel", "Fire", "Water", "Grass", "Electric", "Psychic", "Ice", "Dragon", "Dark" };
+        private Thread searchThread;
+        private bool refresh;
+        private ThreadDelegate gridUpdate;
+        private BindingSource binding = new BindingSource();
+        private List<ColoList> coloList;
+
         public Form1()
         {
             InitializeComponent();
@@ -12,6 +23,8 @@ namespace ColoSearcher
             abilityType.SelectedIndex = 0;
             genderType.SelectedIndex = 0;
             hiddenpower.SelectedIndex = 0;
+            k_dataGridView.DataSource = binding;
+            k_dataGridView.AutoGenerateColumns = false;
         }
 
         private void search_Click(object sender, EventArgs e)
@@ -29,12 +42,65 @@ namespace ColoSearcher
             else if (SpeLow.Value > SpeLow.Value)
                 MessageBox.Show("Spe: Lower limit > Upper limit");
             else
-                search();
+            {
+                coloList = new List<ColoList>();
+                binding = new BindingSource { DataSource = coloList };
+                k_dataGridView.DataSource = binding;
+
+                searchThread =
+                    new Thread(
+                        () =>
+                        generate());
+                searchThread.Start();
+
+                var update = new Thread(updateGUI);
+                update.Start();
+            }
         }
 
-        private void search()
+        private void generate()
         {
-            for()
+            uint hplow = (uint)HPLow.Value;
+            uint hphigh = (uint)HPHigh.Value;
+            uint atklow = (uint)AtkLow.Value;
+            uint atkhigh = (uint)AtkHigh.Value;
+            uint deflow = (uint)DefLow.Value;
+            uint defhigh = (uint)DefHigh.Value;
+            uint spalow = (uint)SpALow.Value;
+            uint spahigh = (uint)SpAHigh.Value;
+            uint spdlow = (uint)SpDLow.Value;
+            uint spdhigh = (uint)SpDHigh.Value;
+            uint spelow = (uint)SpDLow.Value;
+            uint spehigh = (uint)SpDHigh.Value;
+            uint nature = (uint)natureType.SelectedIndex;
+            if (nature != 0)
+            {
+                nature = natures[nature];
+            }
+            uint ability = (uint)abilityType.SelectedIndex;
+            uint gender = (uint)genderType.SelectedIndex;
+            uint hp = (uint)hiddenpower.SelectedIndex;
+            k_dataGridView.Rows.Clear();
+
+            for (uint a = hplow; a <= hphigh; a++)
+            {
+                for (uint b = atklow; b <= atkhigh; b++)
+                {
+                    for (uint c = deflow; c <= defhigh; c++)
+                    {
+                        for (uint d = spalow; d <= spahigh; d++)
+                        {
+                            for (uint e = spdlow; e <= spdhigh; e++)
+                            {
+                                for (uint f = spelow; f <= spehigh; f++)
+                                {
+                                    checkSeed(a, b, c, d, e, f, nature, ability, gender, hp);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private uint forward(uint seed)
@@ -53,22 +119,308 @@ namespace ColoSearcher
             return seed;
         }
 
-        private uint originSeed(uint pid)
+        //Credit to RNG Reporter for this
+        private void checkSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP)
         {
-            uint pidl = pid & 0xFFFF;
-            uint pidh = pid >> 16;
+            uint x8 = 0;
+            uint x8_2 = 0;
 
-            uint test = pidl * 0x10000;
-            uint x = 0;
-            while(x < 65536)
+            x8 = hp + (atk << 5) + (def << 10);
+            x8_2 = x8 ^ 0x8000;
+
+            for (uint cnt = 0; cnt <= 0x1FFFE; cnt++)
             {
-                uint testseed = test + x;
-                uint prevseed = reverse(testseed);
-                uint temp = prevseed >> 16;
-                if (temp == pidh)
-                    return reverse(prevseed);
+                uint x_testXD = (cnt & 1) == 0 ? x8 : x8_2;
+                uint seed = (x_testXD << 16) + (cnt % 0xFFFF);
+                uint ColoSeed = reverse(seed);
+
+                uint rng1XD = forward(seed);
+                uint rng2XD = forward(rng1XD);
+                uint rng3XD = forward(rng2XD);
+                uint rng4XD = forward(rng3XD);
+                rng1XD >>= 16;
+                rng2XD >>= 16;
+                rng3XD >>= 16;
+                rng4XD >>= 16;
+
+                if (Check(rng1XD, rng3XD, rng4XD, spe, spa, spd, nature))
+                {
+                    filterSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, rng1XD, rng3XD, rng4XD, seed);
+                }
             }
-            return pid;
+        }
+
+        private static bool Check(uint iv, uint pid2, uint pid1, uint hp, uint atk, uint def, uint nature)
+        {
+            bool ret = false;
+
+            uint test_hp = iv & 0x1f;
+            uint test_atk = (iv & 0x3E0) >> 5;
+            uint test_def = (iv & 0x7C00) >> 10;
+
+            if (test_hp == hp && test_atk == atk && test_def == def)
+            {
+                
+                if (nature == 0)
+                {
+                    ret = true;
+                }
+                else
+                {
+                    uint pid = (pid2 << 16) | pid1;
+                    uint actualNature = pid % 25;
+                    if (nature == actualNature)
+                    {
+                        ret = true;
+                    }
+                }
+            }
+
+            return ret;
+        }
+
+        private void filterSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint rng1XD, uint rng3XD, uint rng4XD, uint seed)
+        {
+            uint pid = (rng3XD << 16) | rng4XD;
+
+            uint tID = 0;
+            uint sID = 0;
+            if (id.Text != "")
+                tID = uint.Parse(id.Text);
+            if (sid.Text != "")
+                sID = uint.Parse(sid.Text);
+
+            String shiny = "";
+
+            if (Shiny_Check.Checked == true)
+            {
+                if (!isShiny(pid, tID, sID))
+                {
+                    return;
+                }
+                shiny = "!!!";
+            }
+
+            if (hiddenpower.SelectedIndex != 0)
+            {
+                uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
+                if (actualHP != (uint)hiddenpower.SelectedIndex)
+                {
+                    return;
+                }
+            }
+
+            if (genderType.SelectedIndex != 0)
+            {
+                if (genderType.SelectedIndex == 1)
+                {
+                    if ((pid & 255) < 127)
+                    {
+                        return;
+                    }
+                }
+                else if (genderType.SelectedIndex == 2)
+                {
+                    if ((pid & 255) > 126)
+                    {
+                        return;
+                    }
+                }
+                else if (genderType.SelectedIndex == 3)
+                {
+                    if ((pid & 255) < 191)
+                    {
+                        return;
+                    }
+                }
+                else if (genderType.SelectedIndex == 4)
+                {
+                    if ((pid & 255) > 190)
+                    {
+                        return;
+                    }
+                }
+                else if (genderType.SelectedIndex == 5)
+                {
+                    if ((pid & 255) < 64)
+                    {
+                        return;
+                    }
+                }
+                else if (genderType.SelectedIndex == 6)
+                {
+                    if ((pid & 255) > 63)
+                    {
+                        return;
+                    }
+                }
+                else if (genderType.SelectedIndex == 7)
+                {
+                    if ((pid & 255) < 127)
+                    {
+                        return;
+                    }
+                }
+                else if (genderType.SelectedIndex == 8)
+                {
+                    if ((pid & 255) > 126)
+                    {
+                        return;
+                    }
+                }
+            }
+
+            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, pid, shiny, seed);
+        }
+
+        private void addSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint pid, String shiny, uint seed)
+        {
+            String stringNature = Natures[nature];
+            String hPString = hiddenPowers[hP - 1];
+            int hpPower = calcHPPower(hp, atk, def, spa, spd, spe);
+            gender = pid & 255;
+            char gender1;
+            char gender2;
+            char gender3;
+            char gender4;
+
+            if (gender < 127)
+                gender1 = 'F';
+            else
+                gender1 = 'M';
+
+            if (gender < 31)
+                gender2 = 'F';
+            else
+                gender2 = 'M';
+
+            if (gender < 64)
+                gender3 = 'F';
+            else
+                gender3 = 'M';
+
+            if (gender < 191)
+                gender4 = 'F';
+            else
+                gender4 = 'M';
+
+            coloList.Add(new ColoList { Seed = seed,
+                                        PID = pid,
+                                        Shiny = shiny,
+                                        Nature = stringNature,
+                                        Ability = (int)ability,
+                                        Hp = (int)hp,
+                                        Atk = (int)atk,
+                                        Def = (int)def,
+                                        SpA = (int)spa,
+                                        SpD = (int)spd,
+                                        Spe = (int)spe,
+                                        HP = hPString,
+                                        HpP = hpPower,
+                                        Gender1 = gender1,
+                                        Gender2 = gender2,
+                                        Gender3 = gender3,
+                                        Gender4 = gender4});
+        }
+
+        private int calcHPPower(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
+        {
+            int ret = 0;
+
+            uint hpMod = hp & 3;
+            if (hpMod == 2 || hpMod == 3)
+                hpMod = 1;
+            else
+                hpMod = 0;
+            uint atkMod = atk & 3;
+            if (atkMod == 2 || atkMod == 3)
+                atkMod = 1;
+            else
+                atkMod = 0;
+            uint defMod = def & 3;
+            if (defMod == 2 || defMod == 3)
+                defMod = 1;
+            else
+                defMod = 0;
+            uint spaMod = spa & 3;
+            if (spaMod == 2 || spaMod == 3)
+                spaMod = 1;
+            else
+                spaMod = 0;
+            uint spdMod = spd & 3;
+            if (spdMod == 2 || spdMod == 3)
+                spdMod = 1;
+            else
+                spdMod = 0;
+            uint speMod = spe & 3;
+            if (speMod == 2 || speMod == 3)
+                speMod = 1;
+            else
+                speMod = 0;
+
+            uint test = hpMod + atkMod + defMod + spaMod + spdMod + speMod;
+            test *= 40;
+            test /= 63;
+            test += 30;
+
+            ret = (int)test;
+
+            return ret;
+        }
+
+        private bool isShiny(uint PID, uint TID, uint SID)
+        {
+            return ((((PID & 0xFFFF) ^ (PID >> 16) ^ TID ^ SID) & 0xFFF8) == 0);
+        }
+
+        private uint calcHP(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
+        {
+            uint ret = 0;
+
+            ret = ((((hp & 1) + 2*(atk & 1) + 4*(def & 1) + 8*(spe & 1) + 16*(spa & 1) + 32*(spd & 1)) * 15) / 63);
+
+            return ret;
+        }
+
+        private void updateGUI()
+        {
+            gridUpdate = dataGridUpdate;
+            ThreadDelegate resizeGrid = k_dataGridView.AutoResizeColumns;
+            try
+            {
+                bool alive = true;
+                while (alive)
+                {
+                    if (refresh)
+                    {
+                        Invoke(gridUpdate);
+                        refresh = false;
+                    }
+                    if (searchThread == null || !searchThread.IsAlive)
+                    {
+                        alive = false;
+                    }
+
+                    Thread.Sleep(500);
+                }
+            }
+            finally
+            {
+                Invoke(gridUpdate);
+                Invoke(resizeGrid);
+            }
+        }
+
+
+        #region Nested type: ThreadDelegate
+
+        private delegate void ThreadDelegate();
+
+        #endregion
+
+        private void dataGridUpdate()
+        {
+            binding.ResetBindings(false);
         }
     }
 }

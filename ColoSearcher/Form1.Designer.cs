@@ -703,7 +703,6 @@
             this.id.Name = "id";
             this.id.Size = new System.Drawing.Size(39, 20);
             this.id.TabIndex = 260;
-            this.id.Text = "0";
             this.id.ValidatingType = typeof(int);
             // 
             // sid
@@ -713,7 +712,6 @@
             this.sid.Name = "sid";
             this.sid.Size = new System.Drawing.Size(39, 20);
             this.sid.TabIndex = 261;
-            this.sid.Text = "0";
             this.sid.ValidatingType = typeof(int);
             // 
             // Form1
