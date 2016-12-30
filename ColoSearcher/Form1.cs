@@ -70,17 +70,17 @@ namespace ColoSearcher
             uint spahigh = (uint)SpAHigh.Value;
             uint spdlow = (uint)SpDLow.Value;
             uint spdhigh = (uint)SpDHigh.Value;
-            uint spelow = (uint)SpDLow.Value;
-            uint spehigh = (uint)SpDHigh.Value;
-            uint nature = (uint)natureType.SelectedIndex;
+            uint spelow = (uint)SpeLow.Value;
+            uint spehigh = (uint)SpeHigh.Value;
+            uint nature = getNature();
             if (nature != 0)
             {
                 nature = natures[nature];
             }
-            uint ability = (uint)abilityType.SelectedIndex;
-            uint gender = (uint)genderType.SelectedIndex;
-            uint hp = (uint)hiddenpower.SelectedIndex;
-            k_dataGridView.Rows.Clear();
+            uint ability = getAbility();
+            uint gender = getGender();
+            uint hp = getHP();
+            //k_dataGridView.Rows.Clear();
 
             for (uint a = hplow; a <= hphigh; a++)
             {
@@ -101,6 +101,38 @@ namespace ColoSearcher
                     }
                 }
             }
+        }
+
+        private uint getNature()
+        {
+            if (natureType.InvokeRequired)
+                return (uint)natureType.Invoke(new Func<uint>(getNature));
+            else
+                return (uint)natureType.SelectedIndex;
+        }
+
+        private uint getAbility()
+        {
+            if (abilityType.InvokeRequired)
+                return (uint)abilityType.Invoke(new Func<uint>(getAbility));
+            else
+                return (uint)abilityType.SelectedIndex;
+        }
+
+        private uint getGender()
+        {
+            if (genderType.InvokeRequired)
+                return (uint)genderType.Invoke(new Func<uint>(getGender));
+            else
+                return (uint)genderType.SelectedIndex;
+        }
+
+        private uint getHP()
+        {
+            if (hiddenpower.InvokeRequired)
+                return (uint)hiddenpower.Invoke(new Func<uint>(getHP));
+            else
+                return (uint)hiddenpower.SelectedIndex;
         }
 
         private uint forward(uint seed)
@@ -145,7 +177,7 @@ namespace ColoSearcher
 
                 if (Check(rng1XD, rng3XD, rng4XD, spe, spa, spd, nature))
                 {
-                    filterSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, rng1XD, rng3XD, rng4XD, seed);
+                    filterSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, rng1XD, rng3XD, rng4XD, ColoSeed);
                 }
             }
         }
@@ -182,6 +214,7 @@ namespace ColoSearcher
         private void filterSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint rng1XD, uint rng3XD, uint rng4XD, uint seed)
         {
             uint pid = (rng3XD << 16) | rng4XD;
+            nature = pid%25;
 
             uint tID = 0;
             uint sID = 0;
@@ -201,67 +234,67 @@ namespace ColoSearcher
                 shiny = "!!!";
             }
 
-            if (hiddenpower.SelectedIndex != 0)
+            if (hP != 0)
             {
                 uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
-                if (actualHP != (uint)hiddenpower.SelectedIndex)
+                if (actualHP != getHP())
                 {
                     return;
                 }
             }
 
-            if (genderType.SelectedIndex != 0)
+            if (gender != 0)
             {
-                if (genderType.SelectedIndex == 1)
+                if (gender == 1)
                 {
                     if ((pid & 255) < 127)
                     {
                         return;
                     }
                 }
-                else if (genderType.SelectedIndex == 2)
+                else if (gender == 2)
                 {
                     if ((pid & 255) > 126)
                     {
                         return;
                     }
                 }
-                else if (genderType.SelectedIndex == 3)
+                else if (gender == 3)
                 {
                     if ((pid & 255) < 191)
                     {
                         return;
                     }
                 }
-                else if (genderType.SelectedIndex == 4)
+                else if (gender == 4)
                 {
                     if ((pid & 255) > 190)
                     {
                         return;
                     }
                 }
-                else if (genderType.SelectedIndex == 5)
+                else if (gender == 5)
                 {
                     if ((pid & 255) < 64)
                     {
                         return;
                     }
                 }
-                else if (genderType.SelectedIndex == 6)
+                else if (gender == 6)
                 {
                     if ((pid & 255) > 63)
                     {
                         return;
                     }
                 }
-                else if (genderType.SelectedIndex == 7)
+                else if (gender == 7)
                 {
                     if ((pid & 255) < 127)
                     {
                         return;
                     }
                 }
-                else if (genderType.SelectedIndex == 8)
+                else if (gender == 8)
                 {
                     if ((pid & 255) > 126)
                     {
@@ -276,13 +309,21 @@ namespace ColoSearcher
         private void addSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint pid, String shiny, uint seed)
         {
             String stringNature = Natures[nature];
-            String hPString = hiddenPowers[hP - 1];
+            String hPString = hiddenPowers[calcHP(hp,atk,def,spa,spd,spe)];
             int hpPower = calcHPPower(hp, atk, def, spa, spd, spe);
             gender = pid & 255;
             char gender1;
             char gender2;
             char gender3;
             char gender4;
+
+            if(shiny == "")
+            {
+                if (isShiny(pid, uint.Parse(id.Text), uint.Parse(sid.Text)))
+                {
+                    shiny = "!!!";
+                }
+            }
 
             if (gender < 127)
                 gender1 = 'F';
