@@ -237,7 +237,7 @@ namespace ColoSearcher
             if (hP != 0)
             {
                 uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
-                if (actualHP != getHP())
+                if (actualHP != hP)
                 {
                     return;
                 }
@@ -368,36 +368,12 @@ namespace ColoSearcher
         {
             int ret = 0;
 
-            uint hpMod = hp & 3;
-            if (hpMod == 2 || hpMod == 3)
-                hpMod = 1;
-            else
-                hpMod = 0;
-            uint atkMod = atk & 3;
-            if (atkMod == 2 || atkMod == 3)
-                atkMod = 1;
-            else
-                atkMod = 0;
-            uint defMod = def & 3;
-            if (defMod == 2 || defMod == 3)
-                defMod = 1;
-            else
-                defMod = 0;
-            uint spaMod = spa & 3;
-            if (spaMod == 2 || spaMod == 3)
-                spaMod = 1;
-            else
-                spaMod = 0;
-            uint spdMod = spd & 3;
-            if (spdMod == 2 || spdMod == 3)
-                spdMod = 1;
-            else
-                spdMod = 0;
-            uint speMod = spe & 3;
-            if (speMod == 2 || speMod == 3)
-                speMod = 1;
-            else
-                speMod = 0;
+            uint hpMod = (hp & 3) & 1;
+            uint atkMod = (atk & 3) & 1;
+            uint defMod = (def & 3) & 1;
+            uint spaMod = (spa & 3) & 1;
+            uint spdMod = (spd & 3) & 1;
+            uint speMod = (spe & 3) & 1;
 
             uint test = hpMod + atkMod + defMod + spaMod + spdMod + speMod;
             test *= 40;

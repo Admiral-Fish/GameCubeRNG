@@ -29,23 +29,6 @@
         private void InitializeComponent()
         {
             this.k_dataGridView = new System.Windows.Forms.DataGridView();
-            this.Seed = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.PID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Shiny = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Nature = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Ability = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.HP = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Atk = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Def = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.SpA = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.SpD = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Spe = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Hidden = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Power = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.FiftyFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.TwelveFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.TwentyFiveFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.SeventyFiveFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Shiny_Check = new System.Windows.Forms.CheckBox();
             this.L_ball = new System.Windows.Forms.Label();
             this.hiddenpower = new System.Windows.Forms.ComboBox();
@@ -84,6 +67,23 @@
             this.label2 = new System.Windows.Forms.Label();
             this.id = new System.Windows.Forms.MaskedTextBox();
             this.sid = new System.Windows.Forms.MaskedTextBox();
+            this.SeventyFiveFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.TwentyFiveFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.TwelveFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.FiftyFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Power = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Hidden = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Spe = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.SpD = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.SpA = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Def = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Atk = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HP = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Ability = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Nature = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Shiny = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.PID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Seed = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.k_dataGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.SpeHigh)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.HPLow)).BeginInit();
@@ -130,106 +130,6 @@
             this.k_dataGridView.RowTemplate.Height = 21;
             this.k_dataGridView.Size = new System.Drawing.Size(988, 231);
             this.k_dataGridView.TabIndex = 178;
-            // 
-            // Seed
-            // 
-            this.Seed.HeaderText = "Seed";
-            this.Seed.Name = "Seed";
-            this.Seed.Width = 66;
-            // 
-            // PID
-            // 
-            this.PID.HeaderText = "PID";
-            this.PID.Name = "PID";
-            this.PID.Width = 66;
-            // 
-            // Shiny
-            // 
-            this.Shiny.HeaderText = "!!!";
-            this.Shiny.Name = "Shiny";
-            this.Shiny.Width = 30;
-            // 
-            // Nature
-            // 
-            this.Nature.HeaderText = "Nature";
-            this.Nature.Name = "Nature";
-            // 
-            // Ability
-            // 
-            this.Ability.HeaderText = "Ability";
-            this.Ability.Name = "Ability";
-            // 
-            // HP
-            // 
-            this.HP.HeaderText = "HP";
-            this.HP.Name = "HP";
-            this.HP.Width = 30;
-            // 
-            // Atk
-            // 
-            this.Atk.HeaderText = "Atk";
-            this.Atk.Name = "Atk";
-            this.Atk.Width = 30;
-            // 
-            // Def
-            // 
-            this.Def.HeaderText = "Def";
-            this.Def.Name = "Def";
-            this.Def.Width = 30;
-            // 
-            // SpA
-            // 
-            this.SpA.HeaderText = "SpA";
-            this.SpA.Name = "SpA";
-            this.SpA.Width = 30;
-            // 
-            // SpD
-            // 
-            this.SpD.HeaderText = "SpD";
-            this.SpD.Name = "SpD";
-            this.SpD.Width = 30;
-            // 
-            // Spe
-            // 
-            this.Spe.HeaderText = "Spe";
-            this.Spe.Name = "Spe";
-            this.Spe.Width = 30;
-            // 
-            // Hidden
-            // 
-            this.Hidden.HeaderText = "Hidden";
-            this.Hidden.Name = "Hidden";
-            this.Hidden.Width = 56;
-            // 
-            // Power
-            // 
-            this.Power.HeaderText = "Power";
-            this.Power.Name = "Power";
-            this.Power.Width = 56;
-            // 
-            // FiftyFemale
-            // 
-            this.FiftyFemale.HeaderText = "50% F";
-            this.FiftyFemale.Name = "FiftyFemale";
-            this.FiftyFemale.Width = 70;
-            // 
-            // TwelveFemale
-            // 
-            this.TwelveFemale.HeaderText = "12.5% F";
-            this.TwelveFemale.Name = "TwelveFemale";
-            this.TwelveFemale.Width = 70;
-            // 
-            // TwentyFiveFemale
-            // 
-            this.TwentyFiveFemale.HeaderText = "25% F";
-            this.TwentyFiveFemale.Name = "TwentyFiveFemale";
-            this.TwentyFiveFemale.Width = 70;
-            // 
-            // SeventyFiveFemale
-            // 
-            this.SeventyFiveFemale.HeaderText = "75% F";
-            this.SeventyFiveFemale.Name = "SeventyFiveFemale";
-            this.SeventyFiveFemale.Width = 70;
             // 
             // Shiny_Check
             // 
@@ -716,6 +616,106 @@
             this.sid.Text = "0";
             this.sid.ValidatingType = typeof(int);
             // 
+            // SeventyFiveFemale
+            // 
+            this.SeventyFiveFemale.HeaderText = "75% F";
+            this.SeventyFiveFemale.Name = "SeventyFiveFemale";
+            this.SeventyFiveFemale.Width = 70;
+            // 
+            // TwentyFiveFemale
+            // 
+            this.TwentyFiveFemale.HeaderText = "25% F";
+            this.TwentyFiveFemale.Name = "TwentyFiveFemale";
+            this.TwentyFiveFemale.Width = 70;
+            // 
+            // TwelveFemale
+            // 
+            this.TwelveFemale.HeaderText = "12.5% F";
+            this.TwelveFemale.Name = "TwelveFemale";
+            this.TwelveFemale.Width = 70;
+            // 
+            // FiftyFemale
+            // 
+            this.FiftyFemale.HeaderText = "50% F";
+            this.FiftyFemale.Name = "FiftyFemale";
+            this.FiftyFemale.Width = 70;
+            // 
+            // Power
+            // 
+            this.Power.HeaderText = "Power";
+            this.Power.Name = "Power";
+            this.Power.Width = 56;
+            // 
+            // Hidden
+            // 
+            this.Hidden.HeaderText = "Hidden";
+            this.Hidden.Name = "Hidden";
+            this.Hidden.Width = 56;
+            // 
+            // Spe
+            // 
+            this.Spe.HeaderText = "Spe";
+            this.Spe.Name = "Spe";
+            this.Spe.Width = 30;
+            // 
+            // SpD
+            // 
+            this.SpD.HeaderText = "SpD";
+            this.SpD.Name = "SpD";
+            this.SpD.Width = 30;
+            // 
+            // SpA
+            // 
+            this.SpA.HeaderText = "SpA";
+            this.SpA.Name = "SpA";
+            this.SpA.Width = 30;
+            // 
+            // Def
+            // 
+            this.Def.HeaderText = "Def";
+            this.Def.Name = "Def";
+            this.Def.Width = 30;
+            // 
+            // Atk
+            // 
+            this.Atk.HeaderText = "Atk";
+            this.Atk.Name = "Atk";
+            this.Atk.Width = 30;
+            // 
+            // HP
+            // 
+            this.HP.HeaderText = "HP";
+            this.HP.Name = "HP";
+            this.HP.Width = 30;
+            // 
+            // Ability
+            // 
+            this.Ability.HeaderText = "Ability";
+            this.Ability.Name = "Ability";
+            // 
+            // Nature
+            // 
+            this.Nature.HeaderText = "Nature";
+            this.Nature.Name = "Nature";
+            // 
+            // Shiny
+            // 
+            this.Shiny.HeaderText = "!!!";
+            this.Shiny.Name = "Shiny";
+            this.Shiny.Width = 30;
+            // 
+            // PID
+            // 
+            this.PID.HeaderText = "PID";
+            this.PID.Name = "PID";
+            this.PID.Width = 66;
+            // 
+            // Seed
+            // 
+            this.Seed.HeaderText = "Seed";
+            this.Seed.Name = "Seed";
+            this.Seed.Width = 66;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -783,23 +783,6 @@
         #endregion
 
         private System.Windows.Forms.DataGridView k_dataGridView;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Seed;
-        private System.Windows.Forms.DataGridViewTextBoxColumn PID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Shiny;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Nature;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Ability;
-        private System.Windows.Forms.DataGridViewTextBoxColumn HP;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Atk;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Def;
-        private System.Windows.Forms.DataGridViewTextBoxColumn SpA;
-        private System.Windows.Forms.DataGridViewTextBoxColumn SpD;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Spe;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Hidden;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Power;
-        private System.Windows.Forms.DataGridViewTextBoxColumn FiftyFemale;
-        private System.Windows.Forms.DataGridViewTextBoxColumn TwelveFemale;
-        private System.Windows.Forms.DataGridViewTextBoxColumn TwentyFiveFemale;
-        private System.Windows.Forms.DataGridViewTextBoxColumn SeventyFiveFemale;
         private System.Windows.Forms.CheckBox Shiny_Check;
         private System.Windows.Forms.Label L_ball;
         private System.Windows.Forms.ComboBox hiddenpower;
@@ -838,6 +821,23 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.MaskedTextBox id;
         private System.Windows.Forms.MaskedTextBox sid;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Seed;
+        private System.Windows.Forms.DataGridViewTextBoxColumn PID;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Shiny;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Nature;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Ability;
+        private System.Windows.Forms.DataGridViewTextBoxColumn HP;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Atk;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Def;
+        private System.Windows.Forms.DataGridViewTextBoxColumn SpA;
+        private System.Windows.Forms.DataGridViewTextBoxColumn SpD;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Spe;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Hidden;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Power;
+        private System.Windows.Forms.DataGridViewTextBoxColumn FiftyFemale;
+        private System.Windows.Forms.DataGridViewTextBoxColumn TwelveFemale;
+        private System.Windows.Forms.DataGridViewTextBoxColumn TwentyFiveFemale;
+        private System.Windows.Forms.DataGridViewTextBoxColumn SeventyFiveFemale;
     }
 }
 
