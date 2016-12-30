@@ -243,6 +243,16 @@ namespace ColoSearcher
                 }
             }
 
+            if (ability != 0)
+            {
+                uint actualAbility = pid & 1;
+                if (actualAbility != ability)
+                {
+                    return;
+                }
+                ability = actualAbility;
+            }
+
             if (gender != 0)
             {
                 if (gender == 1)
@@ -317,7 +327,7 @@ namespace ColoSearcher
             char gender3;
             char gender4;
 
-            if(shiny == "")
+            if (shiny == "")
             {
                 if (isShiny(pid, uint.Parse(id.Text), uint.Parse(sid.Text)))
                 {
@@ -368,14 +378,38 @@ namespace ColoSearcher
         {
             int ret = 0;
 
-            uint hpMod = (hp & 3) & 1;
-            uint atkMod = (atk & 3) & 1;
-            uint defMod = (def & 3) & 1;
-            uint spaMod = (spa & 3) & 1;
-            uint spdMod = (spd & 3) & 1;
-            uint speMod = (spe & 3) & 1;
+            uint hpMod = hp & 3;
+            if (hpMod == 2 || hpMod == 3)
+                hpMod = 1;
+            else
+                hpMod = 0;
+            uint atkMod = atk & 3;
+            if (atkMod == 2 || atkMod == 3)
+                atkMod = 1;
+            else
+                atkMod = 0;
+            uint defMod = def & 3;
+            if (defMod == 2 || defMod == 3)
+                defMod = 1;
+            else
+                defMod = 0;
+            uint spaMod = spa & 3;
+            if (spaMod == 2 || spaMod == 3)
+                spaMod = 1;
+            else
+                spaMod = 0;
+            uint spdMod = spd & 3;
+            if (spdMod == 2 || spdMod == 3)
+                spdMod = 1;
+            else
+                spdMod = 0;
+            uint speMod = spe & 3;
+            if (speMod == 2 || speMod == 3)
+                speMod = 1;
+            else
+                speMod = 0;
 
-            uint test = hpMod + atkMod + defMod + spaMod + spdMod + speMod;
+            uint test = hpMod + atkMod*2 + defMod*4 + speMod*8 + spaMod*16 + spdMod*32;
             test *= 40;
             test /= 63;
             test += 30;
