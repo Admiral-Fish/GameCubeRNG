@@ -67,23 +67,10 @@
             this.label2 = new System.Windows.Forms.Label();
             this.id = new System.Windows.Forms.MaskedTextBox();
             this.sid = new System.Windows.Forms.MaskedTextBox();
-            this.SeventyFiveFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.TwentyFiveFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.TwelveFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.FiftyFemale = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Power = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Hidden = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Spe = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.SpD = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.SpA = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Def = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Atk = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.HP = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Ability = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Nature = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Shiny = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.PID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Seed = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.k_dataGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.SpeHigh)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.HPLow)).BeginInit();
@@ -107,24 +94,6 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.k_dataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.k_dataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.Seed,
-            this.PID,
-            this.Shiny,
-            this.Nature,
-            this.Ability,
-            this.HP,
-            this.Atk,
-            this.Def,
-            this.SpA,
-            this.SpD,
-            this.Spe,
-            this.Hidden,
-            this.Power,
-            this.FiftyFemale,
-            this.TwelveFemale,
-            this.TwentyFiveFemale,
-            this.SeventyFiveFemale});
             this.k_dataGridView.Location = new System.Drawing.Point(12, 379);
             this.k_dataGridView.Name = "k_dataGridView";
             this.k_dataGridView.RowTemplate.Height = 21;
@@ -616,111 +585,55 @@
             this.sid.Text = "0";
             this.sid.ValidatingType = typeof(int);
             // 
-            // SeventyFiveFemale
+            // button1
             // 
-            this.SeventyFiveFemale.HeaderText = "75% F";
-            this.SeventyFiveFemale.Name = "SeventyFiveFemale";
-            this.SeventyFiveFemale.Width = 70;
+            this.button1.Location = new System.Drawing.Point(42, 290);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 25);
+            this.button1.TabIndex = 262;
+            this.button1.Text = "Physical";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // TwentyFiveFemale
+            // button2
             // 
-            this.TwentyFiveFemale.HeaderText = "25% F";
-            this.TwentyFiveFemale.Name = "TwentyFiveFemale";
-            this.TwentyFiveFemale.Width = 70;
+            this.button2.Location = new System.Drawing.Point(123, 290);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 25);
+            this.button2.TabIndex = 263;
+            this.button2.Text = "Special";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
-            // TwelveFemale
+            // button3
             // 
-            this.TwelveFemale.HeaderText = "12.5% F";
-            this.TwelveFemale.Name = "TwelveFemale";
-            this.TwelveFemale.Width = 70;
+            this.button3.Location = new System.Drawing.Point(42, 321);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(75, 25);
+            this.button3.TabIndex = 264;
+            this.button3.Text = "6 IV";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
-            // FiftyFemale
+            // button4
             // 
-            this.FiftyFemale.HeaderText = "50% F";
-            this.FiftyFemale.Name = "FiftyFemale";
-            this.FiftyFemale.Width = 70;
-            // 
-            // Power
-            // 
-            this.Power.HeaderText = "Power";
-            this.Power.Name = "Power";
-            this.Power.Width = 56;
-            // 
-            // Hidden
-            // 
-            this.Hidden.HeaderText = "Hidden";
-            this.Hidden.Name = "Hidden";
-            this.Hidden.Width = 56;
-            // 
-            // Spe
-            // 
-            this.Spe.HeaderText = "Spe";
-            this.Spe.Name = "Spe";
-            this.Spe.Width = 30;
-            // 
-            // SpD
-            // 
-            this.SpD.HeaderText = "SpD";
-            this.SpD.Name = "SpD";
-            this.SpD.Width = 30;
-            // 
-            // SpA
-            // 
-            this.SpA.HeaderText = "SpA";
-            this.SpA.Name = "SpA";
-            this.SpA.Width = 30;
-            // 
-            // Def
-            // 
-            this.Def.HeaderText = "Def";
-            this.Def.Name = "Def";
-            this.Def.Width = 30;
-            // 
-            // Atk
-            // 
-            this.Atk.HeaderText = "Atk";
-            this.Atk.Name = "Atk";
-            this.Atk.Width = 30;
-            // 
-            // HP
-            // 
-            this.HP.HeaderText = "HP";
-            this.HP.Name = "HP";
-            this.HP.Width = 30;
-            // 
-            // Ability
-            // 
-            this.Ability.HeaderText = "Ability";
-            this.Ability.Name = "Ability";
-            // 
-            // Nature
-            // 
-            this.Nature.HeaderText = "Nature";
-            this.Nature.Name = "Nature";
-            // 
-            // Shiny
-            // 
-            this.Shiny.HeaderText = "!!!";
-            this.Shiny.Name = "Shiny";
-            this.Shiny.Width = 30;
-            // 
-            // PID
-            // 
-            this.PID.HeaderText = "PID";
-            this.PID.Name = "PID";
-            this.PID.Width = 66;
-            // 
-            // Seed
-            // 
-            this.Seed.HeaderText = "Seed";
-            this.Seed.Name = "Seed";
-            this.Seed.Width = 66;
+            this.button4.Location = new System.Drawing.Point(123, 321);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(75, 25);
+            this.button4.TabIndex = 265;
+            this.button4.Text = "Default";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1012, 622);
+            this.Controls.Add(this.button4);
+            this.Controls.Add(this.button3);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.sid);
             this.Controls.Add(this.id);
             this.Controls.Add(this.label2);
@@ -821,23 +734,10 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.MaskedTextBox id;
         private System.Windows.Forms.MaskedTextBox sid;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Seed;
-        private System.Windows.Forms.DataGridViewTextBoxColumn PID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Shiny;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Nature;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Ability;
-        private System.Windows.Forms.DataGridViewTextBoxColumn HP;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Atk;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Def;
-        private System.Windows.Forms.DataGridViewTextBoxColumn SpA;
-        private System.Windows.Forms.DataGridViewTextBoxColumn SpD;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Spe;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Hidden;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Power;
-        private System.Windows.Forms.DataGridViewTextBoxColumn FiftyFemale;
-        private System.Windows.Forms.DataGridViewTextBoxColumn TwelveFemale;
-        private System.Windows.Forms.DataGridViewTextBoxColumn TwentyFiveFemale;
-        private System.Windows.Forms.DataGridViewTextBoxColumn SeventyFiveFemale;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button button4;
     }
 }
 

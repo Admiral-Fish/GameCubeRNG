@@ -24,7 +24,7 @@ namespace ColoSearcher
             genderType.SelectedIndex = 0;
             hiddenpower.SelectedIndex = 0;
             k_dataGridView.DataSource = binding;
-            k_dataGridView.AutoGenerateColumns = false;
+            k_dataGridView.AutoGenerateColumns = true;
         }
 
         private void search_Click(object sender, EventArgs e)
@@ -237,7 +237,7 @@ namespace ColoSearcher
             if (hP != 0)
             {
                 uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
-                if (actualHP != hP)
+                if (actualHP != (hP-1))
                 {
                     return;
                 }
@@ -246,12 +246,12 @@ namespace ColoSearcher
             if (ability != 0)
             {
                 uint actualAbility = pid & 1;
-                if (actualAbility != ability)
+                if (actualAbility != (ability-1))
                 {
                     return;
                 }
-                ability = actualAbility;
             }
+            ability = pid & 1;
 
             if (gender != 0)
             {
@@ -355,8 +355,8 @@ namespace ColoSearcher
             else
                 gender4 = 'M';
 
-            coloList.Add(new ColoList { Seed = seed,
-                                        PID = pid,
+            coloList.Add(new ColoList { Seed = seed.ToString("x").ToUpper(),
+                                        PID = pid.ToString("x").ToUpper(),
                                         Shiny = shiny,
                                         Nature = stringNature,
                                         Ability = (int)ability,
@@ -367,7 +367,7 @@ namespace ColoSearcher
                                         SpD = (int)spd,
                                         Spe = (int)spe,
                                         HP = hPString,
-                                        HpP = hpPower,
+                                        Power = hpPower,
                                         Gender1 = gender1,
                                         Gender2 = gender2,
                                         Gender3 = gender3,
@@ -472,6 +472,70 @@ namespace ColoSearcher
         private void dataGridUpdate()
         {
             binding.ResetBindings(false);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            HPLow.Value = 31;
+            HPHigh.Value = 31;
+            AtkLow.Value = 31;
+            AtkHigh.Value = 31;
+            DefLow.Value = 31;
+            DefHigh.Value = 31;
+            SpALow.Value = 0;
+            SpAHigh.Value = 31;
+            SpDLow.Value = 31;
+            SpDHigh.Value = 31;
+            SpeLow.Value = 31;
+            SpeHigh.Value = 31;
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            HPLow.Value = 31;
+            HPHigh.Value = 31;
+            AtkLow.Value = 0;
+            AtkHigh.Value = 31;
+            DefLow.Value = 31;
+            DefHigh.Value = 31;
+            SpALow.Value = 31;
+            SpAHigh.Value = 31;
+            SpDLow.Value = 31;
+            SpDHigh.Value = 31;
+            SpeLow.Value = 31;
+            SpeHigh.Value = 31;
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            HPLow.Value = 31;
+            HPHigh.Value = 31;
+            AtkLow.Value = 31;
+            AtkHigh.Value = 31;
+            DefLow.Value = 31;
+            DefHigh.Value = 31;
+            SpALow.Value = 31;
+            SpAHigh.Value = 31;
+            SpDLow.Value = 31;
+            SpDHigh.Value = 31;
+            SpeLow.Value = 31;
+            SpeHigh.Value = 31;
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            HPLow.Value = 0;
+            HPHigh.Value = 31;
+            AtkLow.Value = 0;
+            AtkHigh.Value = 31;
+            DefLow.Value = 0;
+            DefHigh.Value = 31;
+            SpALow.Value = 0;
+            SpAHigh.Value = 31;
+            SpDLow.Value = 0;
+            SpDHigh.Value = 31;
+            SpeLow.Value = 0;
+            SpeHigh.Value = 31;
         }
     }
 }

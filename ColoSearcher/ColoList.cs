@@ -4,9 +4,9 @@ namespace ColoSearcher
 {
     internal class ColoList
     {
-        public uint Seed { get; set; }
+        public String Seed { get; set; }
 
-        public uint PID { get; set; }
+        public String PID { get; set; }
 
         public String Shiny { get; set; }
 
@@ -28,7 +28,7 @@ namespace ColoSearcher
 
         public String HP { get; set; }
 
-        public int HpP { get; set; }
+        public int Power { get; set; }
 
         public char Gender1 { get; set; }
 
