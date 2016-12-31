@@ -30,13 +30,13 @@ namespace ColoSearcher
 
         public int Power { get; set; }
 
-        public char Gender1 { get; set; }
+        public char Eighth { get; set; }
 
-        public char Gender2 { get; set; }
+        public char Quarter { get; set; }
 
-        public char Gender3 { get; set; }
+        public char Half { get; set; }
 
-        public char Gender4 { get; set; }
+        public char Three_Fourths { get; set; }
     }
 
 }

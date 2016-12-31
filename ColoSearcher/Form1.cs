@@ -15,6 +15,7 @@ namespace ColoSearcher
         private ThreadDelegate gridUpdate;
         private BindingSource binding = new BindingSource();
         private List<ColoList> coloList;
+        private bool isSearching = false;
 
         public Form1()
         {
@@ -43,9 +44,16 @@ namespace ColoSearcher
                 MessageBox.Show("Spe: Lower limit > Upper limit");
             else
             {
+                if(isSearching)
+                {
+                    status.Text = "Previous search is still running";
+                    return;
+                }
+
                 coloList = new List<ColoList>();
                 binding = new BindingSource { DataSource = coloList };
                 k_dataGridView.DataSource = binding;
+                status.Text = "Searching";
 
                 searchThread =
                     new Thread(
@@ -60,6 +68,7 @@ namespace ColoSearcher
 
         private void generate()
         {
+            isSearching = true;
             uint hplow = (uint)HPLow.Value;
             uint hphigh = (uint)HPHigh.Value;
             uint atklow = (uint)AtkLow.Value;
@@ -101,6 +110,8 @@ namespace ColoSearcher
                     }
                 }
             }
+            isSearching = false;
+            status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
         }
 
         private uint getNature()
@@ -299,14 +310,14 @@ namespace ColoSearcher
                 }
                 else if (gender == 7)
                 {
-                    if ((pid & 255) < 127)
+                    if ((pid & 255) < 31)
                     {
                         return;
                     }
                 }
                 else if (gender == 8)
                 {
-                    if ((pid & 255) > 126)
+                    if ((pid & 255) > 30)
                     {
                         return;
                     }
@@ -335,17 +346,17 @@ namespace ColoSearcher
                 }
             }
 
-            if (gender < 127)
+            if (gender < 31)
                 gender1 = 'F';
             else
                 gender1 = 'M';
 
-            if (gender < 31)
+            if (gender < 64)
                 gender2 = 'F';
             else
                 gender2 = 'M';
 
-            if (gender < 64)
+            if (gender < 126)
                 gender3 = 'F';
             else
                 gender3 = 'M';
@@ -368,10 +379,10 @@ namespace ColoSearcher
                                         Spe = (int)spe,
                                         HP = hPString,
                                         Power = hpPower,
-                                        Gender1 = gender1,
-                                        Gender2 = gender2,
-                                        Gender3 = gender3,
-                                        Gender4 = gender4});
+                                        Eighth = gender1,
+                                        Quarter = gender2,
+                                        Half = gender3,
+                                        Three_Fourths = gender4});
         }
 
         private int calcHPPower(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
@@ -536,6 +547,16 @@ namespace ColoSearcher
             SpDHigh.Value = 31;
             SpeLow.Value = 0;
             SpeHigh.Value = 31;
+        }
+
+        private void cancel_Click(object sender, EventArgs e)
+        {
+            if (isSearching)
+            {
+                isSearching = false;
+                status.Text = "Cancelled. - Awaiting Command";
+                searchThread.Abort();
+            }
         }
     }
 }

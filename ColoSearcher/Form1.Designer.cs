@@ -71,6 +71,8 @@
             this.button2 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
+            this.cancel = new System.Windows.Forms.Button();
+            this.status = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.k_dataGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.SpeHigh)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.HPLow)).BeginInit();
@@ -97,7 +99,7 @@
             this.k_dataGridView.Location = new System.Drawing.Point(12, 379);
             this.k_dataGridView.Name = "k_dataGridView";
             this.k_dataGridView.RowTemplate.Height = 21;
-            this.k_dataGridView.Size = new System.Drawing.Size(988, 231);
+            this.k_dataGridView.Size = new System.Drawing.Size(988, 209);
             this.k_dataGridView.TabIndex = 178;
             // 
             // Shiny_Check
@@ -143,7 +145,7 @@
             "Dark"});
             this.hiddenpower.Location = new System.Drawing.Point(249, 178);
             this.hiddenpower.Name = "hiddenpower";
-            this.hiddenpower.Size = new System.Drawing.Size(113, 21);
+            this.hiddenpower.Size = new System.Drawing.Size(188, 21);
             this.hiddenpower.TabIndex = 238;
             // 
             // genderType
@@ -164,7 +166,7 @@
             "Female (100% Female)"});
             this.genderType.Location = new System.Drawing.Point(249, 109);
             this.genderType.Name = "genderType";
-            this.genderType.Size = new System.Drawing.Size(113, 21);
+            this.genderType.Size = new System.Drawing.Size(188, 21);
             this.genderType.TabIndex = 235;
             // 
             // L_sex
@@ -489,12 +491,12 @@
             "Ability 1"});
             this.abilityType.Location = new System.Drawing.Point(249, 144);
             this.abilityType.Name = "abilityType";
-            this.abilityType.Size = new System.Drawing.Size(113, 21);
+            this.abilityType.Size = new System.Drawing.Size(188, 21);
             this.abilityType.TabIndex = 233;
             // 
             // search
             // 
-            this.search.Location = new System.Drawing.Point(925, 348);
+            this.search.Location = new System.Drawing.Point(844, 348);
             this.search.Name = "search";
             this.search.Size = new System.Drawing.Size(75, 25);
             this.search.TabIndex = 220;
@@ -544,7 +546,7 @@
             "Serious"});
             this.natureType.Location = new System.Drawing.Point(249, 75);
             this.natureType.Name = "natureType";
-            this.natureType.Size = new System.Drawing.Size(113, 21);
+            this.natureType.Size = new System.Drawing.Size(188, 21);
             this.natureType.TabIndex = 254;
             // 
             // label1
@@ -625,11 +627,32 @@
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
+            // cancel
+            // 
+            this.cancel.Location = new System.Drawing.Point(925, 348);
+            this.cancel.Name = "cancel";
+            this.cancel.Size = new System.Drawing.Size(75, 25);
+            this.cancel.TabIndex = 266;
+            this.cancel.Text = "Cancel";
+            this.cancel.UseVisualStyleBackColor = true;
+            this.cancel.Click += new System.EventHandler(this.cancel_Click);
+            // 
+            // status
+            // 
+            this.status.Location = new System.Drawing.Point(12, 593);
+            this.status.Name = "status";
+            this.status.Size = new System.Drawing.Size(305, 20);
+            this.status.TabIndex = 267;
+            this.status.Text = "Awaiting Command";
+            this.status.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1012, 622);
+            this.Controls.Add(this.status);
+            this.Controls.Add(this.cancel);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
@@ -738,6 +761,8 @@
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button cancel;
+        private System.Windows.Forms.Label status;
     }
 }
 
