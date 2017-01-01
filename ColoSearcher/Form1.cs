@@ -294,6 +294,9 @@ namespace ColoSearcher
             uint srange = 1048576;
             isSearching = true;
 
+            if (nature != 0)
+                nature = natures[nature];
+
             uint ability = getAbility();
             uint gender = getGender();
             uint hiddenPower = getHP();
@@ -309,8 +312,6 @@ namespace ColoSearcher
                         if (ivs.Length != 1)
                         {
                             uint pid = pidChk(n, 0);
-                            if (nature != 0)
-                                nature = natures[nature];
                             uint actualNature = pid % 25;
                             if (nature == 0 || nature == actualNature)
                                 filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)n], pid);
