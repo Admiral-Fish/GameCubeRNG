@@ -16,6 +16,9 @@ namespace ColoSearcher
         private BindingSource binding = new BindingSource();
         private List<ColoList> coloList;
         private bool isSearching = false;
+        private List<uint> slist = new List<uint>();
+        private List<uint> rlist = new List<uint>();
+        private uint shinyval;
 
         public Form1()
         {
@@ -30,17 +33,20 @@ namespace ColoSearcher
 
         private void search_Click(object sender, EventArgs e)
         {
-            if (HPLow.Value > HPHigh.Value)
+            uint[] ivsLower = { (uint)HPLow.Value, (uint)AtkLow.Value, (uint)DefLow.Value, (uint)SpALow.Value, (uint)SpDLow.Value, (uint)SpeLow.Value };
+            uint[] ivsUpper = { (uint)HPHigh.Value, (uint)AtkHigh.Value, (uint)DefHigh.Value, (uint)SpAHigh.Value, (uint)SpDHigh.Value, (uint)SpeHigh.Value };
+
+            if (ivsLower[0] > ivsUpper[0])
                 MessageBox.Show("HP: Lower limit > Upper limit");
-            else if (AtkLow.Value > AtkLow.Value)
+            else if (ivsLower[1] > ivsUpper[1])
                 MessageBox.Show("Atk: Lower limit > Upper limit");
-            else if (DefLow.Value > DefLow.Value)
+            else if (ivsLower[2] > ivsUpper[2])
                 MessageBox.Show("Def: Lower limit > Upper limit");
-            else if (SpALow.Value > SpALow.Value)
+            else if (ivsLower[3] > ivsUpper[3])
                 MessageBox.Show("SpA: Lower limit > Upper limit");
-            else if (SpDLow.Value > SpDLow.Value)
+            else if (ivsLower[4] > ivsUpper[4])
                 MessageBox.Show("SpD: Lower limit > Upper limit");
-            else if (SpeLow.Value > SpeLow.Value)
+            else if (ivsLower[5] > ivsUpper[5])
                 MessageBox.Show("Spe: Lower limit > Upper limit");
             else
             {
@@ -54,11 +60,14 @@ namespace ColoSearcher
                 binding = new BindingSource { DataSource = coloList };
                 k_dataGridView.DataSource = binding;
                 status.Text = "Searching";
+                slist.Clear();
+                rlist.Clear();
+                shinyval = (uint.Parse(id.Text) ^ uint.Parse(sid.Text)) >> 4;
 
                 searchThread =
                     new Thread(
                         () =>
-                        generate());
+                        getMethod(ivsLower, ivsUpper));
                 searchThread.Start();
 
                 var update = new Thread(updateGUI);
@@ -66,21 +75,27 @@ namespace ColoSearcher
             }
         }
 
-        private void generate()
+        private void getMethod(uint[] ivsLower, uint[] ivsUpper)
+        {
+            uint method = 1;
+
+            for(int x = 0; x < 6; x++)
+            {
+                uint temp = ivsUpper[x] - ivsLower[x] + 1;
+                method *= temp;
+            }
+
+            generate(ivsLower, ivsUpper);
+            /*if (method > 16384)
+                generate2(ivsLower, ivsUpper);
+            else
+                generate(ivsLower, ivsUpper);*/
+        }
+
+        #region First search method
+        private void generate(uint[] ivsLower, uint[] ivsUpper)
         {
             isSearching = true;
-            uint hplow = (uint)HPLow.Value;
-            uint hphigh = (uint)HPHigh.Value;
-            uint atklow = (uint)AtkLow.Value;
-            uint atkhigh = (uint)AtkHigh.Value;
-            uint deflow = (uint)DefLow.Value;
-            uint defhigh = (uint)DefHigh.Value;
-            uint spalow = (uint)SpALow.Value;
-            uint spahigh = (uint)SpAHigh.Value;
-            uint spdlow = (uint)SpDLow.Value;
-            uint spdhigh = (uint)SpDHigh.Value;
-            uint spelow = (uint)SpeLow.Value;
-            uint spehigh = (uint)SpeHigh.Value;
             uint nature = getNature();
             if (nature != 0)
             {
@@ -91,17 +106,17 @@ namespace ColoSearcher
             uint hp = getHP();
             //k_dataGridView.Rows.Clear();
 
-            for (uint a = hplow; a <= hphigh; a++)
+            for (uint a = ivsLower[0]; a <= ivsUpper[0]; a++)
             {
-                for (uint b = atklow; b <= atkhigh; b++)
+                for (uint b = ivsLower[1]; b <= ivsUpper[1]; b++)
                 {
-                    for (uint c = deflow; c <= defhigh; c++)
+                    for (uint c = ivsLower[2]; c <= ivsUpper[2]; c++)
                     {
-                        for (uint d = spalow; d <= spahigh; d++)
+                        for (uint d = ivsLower[3]; d <= ivsUpper[3]; d++)
                         {
-                            for (uint e = spdlow; e <= spdhigh; e++)
+                            for (uint e = ivsLower[4]; e <= ivsUpper[4]; e++)
                             {
-                                for (uint f = spelow; f <= spehigh; f++)
+                                for (uint f = ivsLower[5]; f <= ivsUpper[5]; f++)
                                 {
                                     checkSeed(a, b, c, d, e, f, nature, ability, gender, hp);
                                 }
@@ -112,54 +127,6 @@ namespace ColoSearcher
             }
             isSearching = false;
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
-        }
-
-        private uint getNature()
-        {
-            if (natureType.InvokeRequired)
-                return (uint)natureType.Invoke(new Func<uint>(getNature));
-            else
-                return (uint)natureType.SelectedIndex;
-        }
-
-        private uint getAbility()
-        {
-            if (abilityType.InvokeRequired)
-                return (uint)abilityType.Invoke(new Func<uint>(getAbility));
-            else
-                return (uint)abilityType.SelectedIndex;
-        }
-
-        private uint getGender()
-        {
-            if (genderType.InvokeRequired)
-                return (uint)genderType.Invoke(new Func<uint>(getGender));
-            else
-                return (uint)genderType.SelectedIndex;
-        }
-
-        private uint getHP()
-        {
-            if (hiddenpower.InvokeRequired)
-                return (uint)hiddenpower.Invoke(new Func<uint>(getHP));
-            else
-                return (uint)hiddenpower.SelectedIndex;
-        }
-
-        private uint forward(uint seed)
-        {
-            seed *= 0x343FD;
-            seed += 0x269EC3;
-            seed &= 0xFFFFFFFF;
-            return seed;
-        }
-
-        private uint reverse(uint seed)
-        {
-            seed *= 0xB9B33155;
-            seed += 0xA170F641;
-            seed &= 0xFFFFFFFF;
-            return seed;
         }
 
         //Credit to RNG Reporter for this
@@ -203,7 +170,7 @@ namespace ColoSearcher
 
             if (test_hp == hp && test_atk == atk && test_def == def)
             {
-                
+
                 if (nature == 0)
                 {
                     ret = true;
@@ -225,20 +192,12 @@ namespace ColoSearcher
         private void filterSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint rng1XD, uint rng3XD, uint rng4XD, uint seed)
         {
             uint pid = (rng3XD << 16) | rng4XD;
-            nature = pid%25;
-
-            uint tID = 0;
-            uint sID = 0;
-            if (id.Text != "")
-                tID = uint.Parse(id.Text);
-            if (sid.Text != "")
-                sID = uint.Parse(sid.Text);
+            nature = pid % 25;
 
             String shiny = "";
-
             if (Shiny_Check.Checked == true)
             {
-                if (!isShiny(pid, tID, sID))
+                if (!isShiny(pid))
                 {
                     return;
                 }
@@ -248,7 +207,7 @@ namespace ColoSearcher
             if (hP != 0)
             {
                 uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
-                if (actualHP != (hP-1))
+                if (actualHP != (hP - 1))
                 {
                     return;
                 }
@@ -257,7 +216,7 @@ namespace ColoSearcher
             if (ability != 0)
             {
                 uint actualAbility = pid & 1;
-                if (actualAbility != (ability-1))
+                if (actualAbility != (ability - 1))
                 {
                     return;
                 }
@@ -326,63 +285,112 @@ namespace ColoSearcher
 
             addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, pid, shiny, seed);
         }
+        #endregion
 
-        private void addSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint pid, String shiny, uint seed)
+        #region Second search method
+        //Credits to Zari for this
+        private void generate2(uint[] ivsLower, uint[] ivsUpper)
         {
-            String stringNature = Natures[nature];
-            String hPString = hiddenPowers[calcHP(hp,atk,def,spa,spd,spe)];
-            int hpPower = calcHPPower(hp, atk, def, spa, spd, spe);
-            gender = pid & 255;
-            char gender1;
-            char gender2;
-            char gender3;
-            char gender4;
+            uint s = 0;
+            uint srange = 1048576;
 
-            if (shiny == "")
+            for (uint z = 0; z < 32; z++)
             {
-                if (isShiny(pid, uint.Parse(id.Text), uint.Parse(sid.Text)))
+                for (uint h = 0; h < 64; h++)
                 {
-                    shiny = "!!!";
+                    populate(s, srange);
+                    for (uint n = 0; n < srange; n++)
+                    {
+                        uint[] ivs = calcIVs(ivsLower, ivsUpper, n);
+                    }
+                    s = slist[(int)srange];
+                    slist.Clear();
+                    rlist.Clear();
                 }
             }
+        }
 
-            if (gender < 31)
-                gender1 = 'F';
+        private uint populateRNG(uint seed)
+        {
+            seed = (seed * 0x000343FD + 0x00269EC3) & 0xFFFFFFFF;
+            slist.Add(seed);
+            rlist.Add((seed >> 16));
+            return seed;
+        }
+
+        private void populate(uint seed, uint srange)
+        {
+            uint s = seed;
+            for (uint x = 0; x < (srange + 10); x++)
+            {
+                s = populateRNG(s);
+            }
+        }
+
+        private uint[] calcIVs(uint[] ivsLower, uint[] ivsUpper, uint frame)
+        {
+            uint[] ivs;
+            uint iv1 = rlist[(int)(frame + 1)];
+            uint iv2 = rlist[(int)(frame + 2)];
+            ivs = createIVs(iv1, iv2, ivsLower, ivsUpper);
+            return ivs;
+        }
+
+        private uint[] createIVs(uint iv1, uint ivs2, uint[] ivsLower, uint[] ivsUpper)
+        {
+            uint[] ivs = new uint[6];
+
+            return ivs;
+        }
+        #endregion
+
+        #region Helper methods
+        private uint getNature()
+        {
+            if (natureType.InvokeRequired)
+                return (uint)natureType.Invoke(new Func<uint>(getNature));
             else
-                gender1 = 'M';
+                return (uint)natureType.SelectedIndex;
+        }
 
-            if (gender < 64)
-                gender2 = 'F';
+        private uint getAbility()
+        {
+            if (abilityType.InvokeRequired)
+                return (uint)abilityType.Invoke(new Func<uint>(getAbility));
             else
-                gender2 = 'M';
+                return (uint)abilityType.SelectedIndex;
+        }
 
-            if (gender < 126)
-                gender3 = 'F';
+        private uint getGender()
+        {
+            if (genderType.InvokeRequired)
+                return (uint)genderType.Invoke(new Func<uint>(getGender));
             else
-                gender3 = 'M';
+                return (uint)genderType.SelectedIndex;
+        }
 
-            if (gender < 191)
-                gender4 = 'F';
+        private uint getHP()
+        {
+            if (hiddenpower.InvokeRequired)
+                return (uint)hiddenpower.Invoke(new Func<uint>(getHP));
             else
-                gender4 = 'M';
+                return (uint)hiddenpower.SelectedIndex;
+        }
 
-            coloList.Add(new ColoList { Seed = seed.ToString("x").ToUpper(),
-                                        PID = pid.ToString("x").ToUpper(),
-                                        Shiny = shiny,
-                                        Nature = stringNature,
-                                        Ability = (int)ability,
-                                        Hp = (int)hp,
-                                        Atk = (int)atk,
-                                        Def = (int)def,
-                                        SpA = (int)spa,
-                                        SpD = (int)spd,
-                                        Spe = (int)spe,
-                                        HP = hPString,
-                                        Power = hpPower,
-                                        Eighth = gender1,
-                                        Quarter = gender2,
-                                        Half = gender3,
-                                        Three_Fourths = gender4});
+        private uint forward(uint seed)
+        {
+            seed *= 0x343FD;
+            seed += 0x269EC3;
+            seed &= 0xFFFFFFFF;
+            return seed;
+        }
+
+        private uint reverse(uint seed)
+        {
+            seed *= 0xB9B33155;
+            seed += 0xA170F641;
+            seed &= 0xFFFFFFFF;
+            return seed;
         }
 
         private int calcHPPower(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
@@ -430,9 +438,10 @@ namespace ColoSearcher
             return ret;
         }
 
-        private bool isShiny(uint PID, uint TID, uint SID)
+        private bool isShiny(uint PID)
         {
-            return ((((PID & 0xFFFF) ^ (PID >> 16) ^ TID ^ SID) & 0xFFF8) == 0);
+            uint test = ((PID >> 16) ^ (PID & 0xffff)) >> 4;
+            return test == shinyval;
         }
 
         private uint calcHP(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
@@ -443,7 +452,70 @@ namespace ColoSearcher
 
             return ret;
         }
+        #endregion
 
+        private void addSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint pid, String shiny, uint seed)
+        {
+            String stringNature = Natures[nature];
+            String hPString = hiddenPowers[calcHP(hp, atk, def, spa, spd, spe)];
+            int hpPower = calcHPPower(hp, atk, def, spa, spd, spe);
+            gender = pid & 255;
+            char gender1;
+            char gender2;
+            char gender3;
+            char gender4;
+
+            if (shiny == "")
+            {
+                if (isShiny(pid))
+                {
+                    shiny = "!!!";
+                }
+            }
+
+            if (gender < 31)
+                gender1 = 'F';
+            else
+                gender1 = 'M';
+
+            if (gender < 64)
+                gender2 = 'F';
+            else
+                gender2 = 'M';
+
+            if (gender < 126)
+                gender3 = 'F';
+            else
+                gender3 = 'M';
+
+            if (gender < 191)
+                gender4 = 'F';
+            else
+                gender4 = 'M';
+
+            coloList.Add(new ColoList
+            {
+                Seed = seed.ToString("x").ToUpper(),
+                PID = pid.ToString("x").ToUpper(),
+                Shiny = shiny,
+                Nature = stringNature,
+                Ability = (int)ability,
+                Hp = (int)hp,
+                Atk = (int)atk,
+                Def = (int)def,
+                SpA = (int)spa,
+                SpD = (int)spd,
+                Spe = (int)spe,
+                HP = hPString,
+                Power = hpPower,
+                Eighth = gender1,
+                Quarter = gender2,
+                Half = gender3,
+                Three_Fourths = gender4
+            });
+        }
+
+        #region GUI code
         private void updateGUI()
         {
             gridUpdate = dataGridUpdate;
@@ -484,7 +556,9 @@ namespace ColoSearcher
         {
             binding.ResetBindings(false);
         }
+        #endregion
 
+        #region Quick search settings
         private void button1_Click(object sender, EventArgs e)
         {
             HPLow.Value = 31;
@@ -558,5 +632,6 @@ namespace ColoSearcher
                 searchThread.Abort();
             }
         }
+        #endregion
     }
 }
