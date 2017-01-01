@@ -85,11 +85,10 @@ namespace ColoSearcher
                 method *= temp;
             }
 
-            generate(ivsLower, ivsUpper);
-            /*if (method > 16384)
-                generate2(ivsLower, ivsUpper);
+            if (method > 16384)
+                generate2(ivsLower, ivsUpper, getNature());
             else
-                generate(ivsLower, ivsUpper);*/
+                generate(ivsLower, ivsUpper);
         }
 
         #region First search method
@@ -289,10 +288,15 @@ namespace ColoSearcher
 
         #region Second search method
         //Credits to Zari for this
-        private void generate2(uint[] ivsLower, uint[] ivsUpper)
+        private void generate2(uint[] ivsLower, uint[] ivsUpper, uint nature)
         {
             uint s = 0;
             uint srange = 1048576;
+            isSearching = true;
+
+            uint ability = getAbility();
+            uint gender = getGender();
+            uint hiddenPower = getHP();
 
             for (uint z = 0; z < 32; z++)
             {
@@ -302,12 +306,120 @@ namespace ColoSearcher
                     for (uint n = 0; n < srange; n++)
                     {
                         uint[] ivs = calcIVs(ivsLower, ivsUpper, n);
+                        if (ivs.Length != 1)
+                        {
+                            uint pid = pidChk(n, 0);
+                            if (nature != 0)
+                                nature = natures[nature];
+                            uint actualNature = pid % 25;
+                            if (nature == 0 || nature == actualNature)
+                                filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)n], pid);
+
+                            pid = pidChk(n, 1);
+                            actualNature = pid % 25;
+                            if (nature == 0 || nature == actualNature)
+                                filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, (slist[(int)n] ^ 0x80000000), pid);
+                        }
                     }
                     s = slist[(int)srange];
                     slist.Clear();
                     rlist.Clear();
                 }
             }
+            isSearching = false;
+        }
+
+        private void filterSeed2(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hiddenPowerValue, uint seed, uint pid)
+        {
+            String shiny = "";
+            if (Shiny_Check.Checked == true)
+            {
+                if (!isShiny(pid))
+                {
+                    return;
+                }
+                shiny = "!!!";
+            }
+
+            if (hiddenPowerValue != 0)
+            {
+                uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
+                if (actualHP != (hiddenPowerValue - 1))
+                {
+                    return;
+                }
+            }
+
+            if (ability != 0)
+            {
+                uint actualAbility = pid & 1;
+                if (actualAbility != (ability - 1))
+                {
+                    return;
+                }
+            }
+            ability = pid & 1;
+
+            if (gender != 0)
+            {
+                if (gender == 1)
+                {
+                    if ((pid & 255) < 127)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 2)
+                {
+                    if ((pid & 255) > 126)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 3)
+                {
+                    if ((pid & 255) < 191)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 4)
+                {
+                    if ((pid & 255) > 190)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 5)
+                {
+                    if ((pid & 255) < 64)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 6)
+                {
+                    if ((pid & 255) > 63)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 7)
+                {
+                    if ((pid & 255) < 31)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 8)
+                {
+                    if ((pid & 255) > 30)
+                    {
+                        return;
+                    }
+                }
+            }
+            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hiddenPowerValue, pid, shiny, seed);
         }
 
         private uint populateRNG(uint seed)
@@ -340,7 +452,56 @@ namespace ColoSearcher
         {
             uint[] ivs = new uint[6];
 
+            for (int x = 0; x < 3; x++)
+            {
+                int q = x * 5;
+                uint iv = (iv1 >> q) & 31;
+                if (iv >= ivsLower[x] && iv <= ivsUpper[x])
+                    ivs[x] = iv;
+                else
+                {
+                    ivs = new uint[1];
+                    return ivs;
+                }
+            }
+
+            uint iV = (ivs2 >> 5) & 31;
+            if (iV >= ivsLower[3] && iV <= ivsUpper[3])
+                ivs[3] = iV;
+            else
+            {
+                ivs = new uint[1];
+                return ivs;
+            }
+
+            iV = (ivs2 >> 10) & 31;
+            if (iV >= ivsLower[4] && iV <= ivsUpper[4])
+                ivs[4] = iV;
+            else
+            {
+                ivs = new uint[1];
+                return ivs;
+            }
+
+            iV = ivs2 & 31;
+            if (iV >= ivsLower[5] && iV <= ivsUpper[5])
+                ivs[5] = iV;
+            else
+            {
+                ivs = new uint[1];
+                return ivs;
+            }
+
             return ivs;
+        }
+
+        private uint pidChk(uint frame, uint xor_val)
+        {
+            uint pid = (rlist[(int)(frame + 4)] << 16) + rlist[(int)(frame + 5)];
+            if (xor_val == 1)
+                pid = pid ^ 0x80008000;
+
+            return pid;
         }
         #endregion
 
