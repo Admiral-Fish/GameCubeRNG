@@ -66,7 +66,7 @@ namespace ColoSearcher
                 status.Text = "Searching";
                 slist.Clear();
                 rlist.Clear();
-                shinyval = (uint.Parse(id.Text) ^ uint.Parse(sid.Text)) >> 4;
+                shinyval = (uint.Parse(id.Text) ^ uint.Parse(sid.Text)) >> 3;
 
                 searchThread =
                     new Thread(
@@ -527,7 +527,7 @@ namespace ColoSearcher
             uint method = 1;
 
             if (wshMkr.Checked == true)
-                shinyval = (20043 ^ 0) >> 4;
+                shinyval = (20043 ^ 0) >> 3;
 
             for (int x = 0; x < 6; x++)
             {
@@ -1062,7 +1062,7 @@ namespace ColoSearcher
 
         private bool isShiny(uint PID)
         {
-            uint test = ((PID >> 16) ^ (PID & 0xffff)) >> 4;
+            uint test = ((PID >> 16) ^ (PID & 0xffff)) >> 3;
             return test == shinyval;
         }
 
