@@ -73,6 +73,11 @@
             this.button4 = new System.Windows.Forms.Button();
             this.cancel = new System.Windows.Forms.Button();
             this.status = new System.Windows.Forms.Label();
+            this.searchMethod = new System.Windows.Forms.ComboBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.shadowPokemon = new System.Windows.Forms.ComboBox();
+            this.galesCheck = new System.Windows.Forms.CheckBox();
+            this.label4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.k_dataGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.SpeHigh)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.HPLow)).BeginInit();
@@ -646,11 +651,161 @@
             this.status.Text = "Awaiting Command";
             this.status.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // searchMethod
+            // 
+            this.searchMethod.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.searchMethod.FormattingEnabled = true;
+            this.searchMethod.Items.AddRange(new object[] {
+            "Reverse Method 1",
+            "Gales / Colo"});
+            this.searchMethod.Location = new System.Drawing.Point(311, 295);
+            this.searchMethod.Name = "searchMethod";
+            this.searchMethod.Size = new System.Drawing.Size(126, 21);
+            this.searchMethod.TabIndex = 268;
+            // 
+            // label3
+            // 
+            this.label3.Location = new System.Drawing.Point(218, 294);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(87, 20);
+            this.label3.TabIndex = 269;
+            this.label3.Text = "Search Method";
+            this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // shadowPokemon
+            // 
+            this.shadowPokemon.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.shadowPokemon.FormattingEnabled = true;
+            this.shadowPokemon.Items.AddRange(new object[] {
+            "Houndour-1",
+            "Houndour-2 (Not supported)",
+            "Houndour-3",
+            "Spheal-1",
+            "Spheal-2",
+            "Spheal-3",
+            "Baltoy-1",
+            "Baltoy-2 (Not supported)",
+            "Baltoy-3",
+            "Mareep-1",
+            "Mareep-2",
+            "Mareep-3",
+            "Gulpin-1",
+            "Gulpin-2",
+            "Gulpin-3",
+            "Seedot-1",
+            "Seedot-2 (Not supported)",
+            "Seedot-3 (Not supported)",
+            "Teddiursa",
+            "Carvanha",
+            "Zangoose",
+            "Togepi",
+            "Shellder",
+            "Beedrill",
+            "Swellow",
+            "Lugia",
+            "Rhydon",
+            "Moltres",
+            "Exeggutor",
+            "Tauros",
+            "Articuno",
+            "Zapdos",
+            "Poochyena",
+            "Ledyba",
+            "Spinarak",
+            "Makuhita",
+            "Duskull",
+            "Farfetch\'d",
+            "Altaria",
+            "Kangaskhan",
+            "Banette",
+            "Magmar",
+            "Pinsir",
+            "Rapidash",
+            "Magcargo",
+            "Hitmonchan",
+            "Hitmonlee",
+            "Lickitung",
+            "Scyther",
+            "Chansey",
+            "Solrock",
+            "Growlithe",
+            "Butterfree",
+            "Weepinbell",
+            "Hypno",
+            "Sableye",
+            "Raticate",
+            "Starmie",
+            "Electabuzz",
+            "Snorlax",
+            "Mr. Mime",
+            "Salamence",
+            "Marowak",
+            "Lapras",
+            "Numel",
+            "Shroomish",
+            "Delcatty",
+            "Voltorb",
+            "Vulpix",
+            "Ralts",
+            "Mawile",
+            "Snorunt",
+            "Pineco",
+            "Natu",
+            "Roselia",
+            "Meowth",
+            "Swinub",
+            "Spearow",
+            "Grimer",
+            "Seel",
+            "Lunatone",
+            "Nosepass",
+            "Paras",
+            "Pidgeotto",
+            "Tangela",
+            "Magneton",
+            "Venomoth",
+            "Arbok",
+            "Primeape",
+            "Golduck",
+            "Dodrio",
+            "Poliwrath",
+            "Dugtrio",
+            "Manectric",
+            "Dragonite"});
+            this.shadowPokemon.Location = new System.Drawing.Point(589, 75);
+            this.shadowPokemon.Name = "shadowPokemon";
+            this.shadowPokemon.Size = new System.Drawing.Size(174, 21);
+            this.shadowPokemon.TabIndex = 271;
+            // 
+            // galesCheck
+            // 
+            this.galesCheck.AutoSize = true;
+            this.galesCheck.Location = new System.Drawing.Point(530, 77);
+            this.galesCheck.Name = "galesCheck";
+            this.galesCheck.Size = new System.Drawing.Size(53, 17);
+            this.galesCheck.TabIndex = 272;
+            this.galesCheck.Text = "Gales";
+            this.galesCheck.UseVisualStyleBackColor = true;
+            // 
+            // label4
+            // 
+            this.label4.Location = new System.Drawing.Point(527, 112);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(188, 20);
+            this.label4.TabIndex = 273;
+            this.label4.Text = "Gales of Darkness is not currently supported.";
+            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1012, 622);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.galesCheck);
+            this.Controls.Add(this.shadowPokemon);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.searchMethod);
             this.Controls.Add(this.status);
             this.Controls.Add(this.cancel);
             this.Controls.Add(this.button4);
@@ -763,6 +918,11 @@
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button cancel;
         private System.Windows.Forms.Label status;
+        private System.Windows.Forms.ComboBox searchMethod;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.ComboBox shadowPokemon;
+        private System.Windows.Forms.CheckBox galesCheck;
+        private System.Windows.Forms.Label label4;
     }
 }
 

@@ -27,6 +27,8 @@ namespace ColoSearcher
             abilityType.SelectedIndex = 0;
             genderType.SelectedIndex = 0;
             hiddenpower.SelectedIndex = 0;
+            searchMethod.SelectedIndex = 0;
+            shadowPokemon.SelectedIndex = 0;
             k_dataGridView.DataSource = binding;
             k_dataGridView.AutoGenerateColumns = true;
         }
@@ -50,7 +52,9 @@ namespace ColoSearcher
                 MessageBox.Show("Spe: Lower limit > Upper limit");
             else
             {
-                if(isSearching)
+                k_dataGridView.Rows.Clear();
+
+                if (isSearching)
                 {
                     status.Text = "Previous search is still running";
                     return;
@@ -67,7 +71,7 @@ namespace ColoSearcher
                 searchThread =
                     new Thread(
                         () =>
-                        getMethod(ivsLower, ivsUpper));
+                        getSearch(ivsLower, ivsUpper));
                 searchThread.Start();
 
                 var update = new Thread(updateGUI);
@@ -75,6 +79,16 @@ namespace ColoSearcher
             }
         }
 
+        private void getSearch(uint[] ivsLower, uint[] ivsUpper)
+        {
+            uint test = getSearchMethod();
+            if (test == 0)
+                getRMethod(ivsLower, ivsUpper);
+            else
+                getMethod(ivsLower, ivsUpper);
+        }
+
+        #region Gales/Colo search
         private void getMethod(uint[] ivsLower, uint[] ivsUpper)
         {
             uint method = 1;
@@ -103,7 +117,6 @@ namespace ColoSearcher
             uint ability = getAbility();
             uint gender = getGender();
             uint hp = getHP();
-            //k_dataGridView.Rows.Clear();
 
             for (uint a = ivsLower[0]; a <= ivsUpper[0]; a++)
             {
@@ -328,6 +341,7 @@ namespace ColoSearcher
                 }
             }
             isSearching = false;
+            status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
         }
 
         private void filterSeed2(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hiddenPowerValue, uint seed, uint pid)
@@ -425,7 +439,7 @@ namespace ColoSearcher
 
         private uint populateRNG(uint seed)
         {
-            seed = (seed * 0x000343FD + 0x00269EC3) & 0xFFFFFFFF;
+            seed = forward(seed);
             slist.Add(seed);
             rlist.Add((seed >> 16));
             return seed;
@@ -505,6 +519,220 @@ namespace ColoSearcher
             return pid;
         }
         #endregion
+        #endregion
+
+        #region Reverse Method 1
+        private void getRMethod(uint[] ivsLower, uint[] ivsUpper)
+        {
+            uint method = 1;
+
+            for (int x = 0; x < 6; x++)
+            {
+                uint temp = ivsUpper[x] - ivsLower[x] + 1;
+                method *= temp;
+            }
+
+            if (method > 16384)
+                generateR2(ivsLower, ivsUpper, getNature());
+            else
+                generateR(ivsLower, ivsUpper);
+        }
+
+        #region Search 1
+        private void generateR(uint[] ivsLower, uint[] ivsUpper)
+        {
+            isSearching = true;
+            uint nature = getNature();
+            if (nature != 0)
+            {
+                nature = natures[nature];
+            }
+            uint ability = getAbility();
+            uint gender = getGender();
+            uint hp = getHP();
+
+            for (uint a = ivsLower[0]; a <= ivsUpper[0]; a++)
+            {
+                for (uint b = ivsLower[1]; b <= ivsUpper[1]; b++)
+                {
+                    for (uint c = ivsLower[2]; c <= ivsUpper[2]; c++)
+                    {
+                        for (uint d = ivsLower[3]; d <= ivsUpper[3]; d++)
+                        {
+                            for (uint e = ivsLower[4]; e <= ivsUpper[4]; e++)
+                            {
+                                for (uint f = ivsLower[5]; f <= ivsUpper[5]; f++)
+                                {
+                                    checkSeedR(a, b, c, d, e, f, nature, ability, gender, hp);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            isSearching = false;
+            status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
+        }
+
+        //Credits to RNG reporter for this
+        private void checkSeedR(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP)
+        {
+            uint x4 = 0;
+            uint x4_2 = 0;
+
+            x4 = spe + (spa << 5) + (spd << 10);
+            x4_2 = x4 ^ 0x8000;
+
+            for (uint cnt = 0; cnt <= 0x1FFFE; cnt++)
+            {
+                uint x_test = (cnt & 1) == 0 ? x4 : x4_2;
+                uint seed = (x_test << 16) + (cnt % 0xFFFF);
+
+                uint rng1 = reverseR(seed);
+                uint rng2 = reverseR(rng1);
+                uint rng3 = reverseR(rng2);
+                uint rng4 = reverseR(rng3);
+                uint Method1Seed = rng4;
+                rng1 >>= 16;
+                rng2 >>= 16;
+                rng3 >>= 16;
+                rng4 >>= 16;
+
+                if (Check(rng1, rng3, rng2, hp, atk, def, nature))
+                {
+                    filterSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, rng1, rng3, rng2, Method1Seed);
+                }
+            }
+        }
+        #endregion
+
+        #region Search 2
+        private void generateR2(uint[] ivsLower, uint[] ivsUpper, uint nature)
+        {
+            uint s = 0;
+            uint srange = 1048576;
+            isSearching = true;
+
+            if (nature != 0)
+                nature = natures[nature];
+
+            uint ability = getAbility();
+            uint gender = getGender();
+            uint hiddenPower = getHP();
+
+            for (uint z = 0; z < 32; z++)
+            {
+                for (uint h = 0; h < 64; h++)
+                {
+                    populateR(s, srange);
+                    for (uint n = 0; n < srange; n++)
+                    {
+                        uint[] ivs = calcIVsR(ivsLower, ivsUpper, n);
+                        if (ivs.Length != 1)
+                        {
+                            uint pid = pidChkR(n, 0);
+                            uint actualNature = pid % 25;
+                            if (nature == 0 || nature == actualNature)
+                                filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)(n)], pid);
+
+                            pid = pidChkR(n, 1);
+                            actualNature = pid % 25;
+                            if (nature == 0 || nature == actualNature)
+                                filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, (slist[(int)(n)] ^ 0x80000000), pid);
+                        }
+                    }
+                    s = slist[(int)srange];
+                    slist.Clear();
+                    rlist.Clear();
+                }
+            }
+            isSearching = false;
+            status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
+        }
+
+        private uint populateRNGR(uint seed)
+        {
+            seed = forwardR(seed);
+            slist.Add(seed);
+            rlist.Add((seed >> 16));
+            return seed;
+        }
+
+        private void populateR(uint seed, uint srange)
+        {
+            uint s = seed;
+            for (uint x = 0; x < (srange + 10); x++)
+            {
+                s = populateRNGR(s);
+            }
+        }
+
+        private uint[] calcIVsR(uint[] ivsLower, uint[] ivsUpper, uint frame)
+        {
+            uint[] ivs;
+            uint iv1 = rlist[(int)(frame + 3)];
+            uint iv2 = rlist[(int)(frame + 4)];
+            ivs = createIVsR(iv1, iv2, ivsLower, ivsUpper);
+            return ivs;
+        }
+
+        private uint[] createIVsR(uint iv1, uint ivs2, uint[] ivsLower, uint[] ivsUpper)
+        {
+            uint[] ivs = new uint[6];
+
+            for (int x = 0; x < 3; x++)
+            {
+                int q = x * 5;
+                uint iv = (iv1 >> q) & 31;
+                if (iv >= ivsLower[x] && iv <= ivsUpper[x])
+                    ivs[x] = iv;
+                else
+                {
+                    ivs = new uint[1];
+                    return ivs;
+                }
+            }
+
+            uint iV = (ivs2 >> 5) & 31;
+            if (iV >= ivsLower[3] && iV <= ivsUpper[3])
+                ivs[3] = iV;
+            else
+            {
+                ivs = new uint[1];
+                return ivs;
+            }
+
+            iV = (ivs2 >> 10) & 31;
+            if (iV >= ivsLower[4] && iV <= ivsUpper[4])
+                ivs[4] = iV;
+            else
+            {
+                ivs = new uint[1];
+                return ivs;
+            }
+
+            iV = ivs2 & 31;
+            if (iV >= ivsLower[5] && iV <= ivsUpper[5])
+                ivs[5] = iV;
+            else
+            {
+                ivs = new uint[1];
+                return ivs;
+            }
+
+            return ivs;
+        }
+
+        private uint pidChkR(uint frame, uint xor_val)
+        {
+            uint pid = (rlist[(int)(frame + 1)] << 16) + rlist[(int)(frame + 2)];
+            if (xor_val == 1)
+                pid = pid ^ 0x80008000;
+
+            return pid;
+        }
+        #endregion
+        #endregion
 
         #region Helper methods
         private uint getNature()
@@ -539,6 +767,14 @@ namespace ColoSearcher
                 return (uint)hiddenpower.SelectedIndex;
         }
 
+        private uint getSearchMethod()
+        {
+            if (searchMethod.InvokeRequired)
+                return (uint)searchMethod.Invoke(new Func<uint>(getSearchMethod));
+            else
+                return (uint)searchMethod.SelectedIndex;
+        }
+
         private uint forward(uint seed)
         {
             seed *= 0x343FD;
@@ -551,6 +787,22 @@ namespace ColoSearcher
         {
             seed *= 0xB9B33155;
             seed += 0xA170F641;
+            seed &= 0xFFFFFFFF;
+            return seed;
+        }
+
+        private uint forwardR(uint seed)
+        {
+            seed *= 0x41c64e6d;
+            seed += 0x6073;
+            seed &= 0xFFFFFFFF;
+            return seed;
+        }
+
+        private uint reverseR(uint seed)
+        {
+            seed *= 0xeeb9eb65;
+            seed += 0xa3561a1;
             seed &= 0xFFFFFFFF;
             return seed;
         }
