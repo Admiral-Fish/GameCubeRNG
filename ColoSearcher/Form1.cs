@@ -526,6 +526,9 @@ namespace ColoSearcher
         {
             uint method = 1;
 
+            if (wshMkr.Checked == true)
+                shinyval = (20043 ^ 0) >> 4;
+
             for (int x = 0; x < 6; x++)
             {
                 uint temp = ivsUpper[x] - ivsLower[x] + 1;
@@ -600,11 +603,210 @@ namespace ColoSearcher
 
                 if (Check(rng1, rng3, rng2, hp, atk, def, nature))
                 {
-                    filterSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, rng1, rng3, rng2, Method1Seed);
+                    if (wshMkr.Checked == true)
+                        filterSeedWsh(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, rng1, rng3, rng2, Method1Seed);
+                    else
+                        filterSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, rng1, rng3, rng2, Method1Seed);
                 }
             }
         }
         #endregion
+
+        private void filterSeedWsh(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint rng1XD, uint rng3XD, uint rng4XD, uint seed)
+        {
+            if (seed > 0xFFFF)
+                return;
+
+            uint pid = (rng3XD << 16) | rng4XD;
+            nature = pid % 25;
+
+            String shiny = "";
+            if (Shiny_Check.Checked == true)
+            {
+                if (!isShiny(pid))
+                {
+                    return;
+                }
+                shiny = "!!!";
+            }
+
+            if (hP != 0)
+            {
+                uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
+                if (actualHP != (hP - 1))
+                {
+                    return;
+                }
+            }
+
+            if (ability != 0)
+            {
+                uint actualAbility = pid & 1;
+                if (actualAbility != (ability - 1))
+                {
+                    return;
+                }
+            }
+            ability = pid & 1;
+
+            if (gender != 0)
+            {
+                if (gender == 1)
+                {
+                    if ((pid & 255) < 127)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 2)
+                {
+                    if ((pid & 255) > 126)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 3)
+                {
+                    if ((pid & 255) < 191)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 4)
+                {
+                    if ((pid & 255) > 190)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 5)
+                {
+                    if ((pid & 255) < 64)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 6)
+                {
+                    if ((pid & 255) > 63)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 7)
+                {
+                    if ((pid & 255) < 31)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 8)
+                {
+                    if ((pid & 255) > 30)
+                    {
+                        return;
+                    }
+                }
+            }
+
+            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, pid, shiny, seed);
+        }
+
+        private void filterSeed2Wsh(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hiddenPowerValue, uint seed, uint pid)
+        {
+            if (seed > 0xFFFF)
+                return;
+
+            String shiny = "";
+            if (Shiny_Check.Checked == true)
+            {
+                if (!isShiny(pid))
+                {
+                    return;
+                }
+                shiny = "!!!";
+            }
+
+            if (hiddenPowerValue != 0)
+            {
+                uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
+                if (actualHP != (hiddenPowerValue - 1))
+                {
+                    return;
+                }
+            }
+
+            if (ability != 0)
+            {
+                uint actualAbility = pid & 1;
+                if (actualAbility != (ability - 1))
+                {
+                    return;
+                }
+            }
+            ability = pid & 1;
+
+            if (gender != 0)
+            {
+                if (gender == 1)
+                {
+                    if ((pid & 255) < 127)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 2)
+                {
+                    if ((pid & 255) > 126)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 3)
+                {
+                    if ((pid & 255) < 191)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 4)
+                {
+                    if ((pid & 255) > 190)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 5)
+                {
+                    if ((pid & 255) < 64)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 6)
+                {
+                    if ((pid & 255) > 63)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 7)
+                {
+                    if ((pid & 255) < 31)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 8)
+                {
+                    if ((pid & 255) > 30)
+                    {
+                        return;
+                    }
+                }
+            }
+            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hiddenPowerValue, pid, shiny, seed);
+        }
 
         #region Search 2
         private void generateR2(uint[] ivsLower, uint[] ivsUpper, uint nature)
@@ -633,12 +835,18 @@ namespace ColoSearcher
                             uint pid = pidChkR(n, 0);
                             uint actualNature = pid % 25;
                             if (nature == 0 || nature == actualNature)
-                                filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)(n)], pid);
+                                if (wshMkr.Checked == true)
+                                    filterSeed2Wsh(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)(n)], pid);
+                                else
+                                    filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)(n)], pid);
 
                             pid = pidChkR(n, 1);
                             actualNature = pid % 25;
                             if (nature == 0 || nature == actualNature)
-                                filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, (slist[(int)(n)] ^ 0x80000000), pid);
+                                if (wshMkr.Checked == true)
+                                    filterSeed2Wsh(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, (slist[(int)(n)] ^ 0x80000000), pid);
+                                else
+                                    filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, (slist[(int)(n)] ^ 0x80000000), pid);
                         }
                     }
                     s = slist[(int)srange];

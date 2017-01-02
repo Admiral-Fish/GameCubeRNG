@@ -78,6 +78,7 @@
             this.shadowPokemon = new System.Windows.Forms.ComboBox();
             this.galesCheck = new System.Windows.Forms.CheckBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.wshMkr = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.k_dataGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.SpeHigh)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.HPLow)).BeginInit();
@@ -796,11 +797,22 @@
             this.label4.Text = "Gales of Darkness is not currently supported.";
             this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
+            // wshMkr
+            // 
+            this.wshMkr.AutoSize = true;
+            this.wshMkr.Location = new System.Drawing.Point(233, 321);
+            this.wshMkr.Name = "wshMkr";
+            this.wshMkr.Size = new System.Drawing.Size(100, 17);
+            this.wshMkr.TabIndex = 274;
+            this.wshMkr.Text = "Wishmkr Jirachi";
+            this.wshMkr.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1012, 622);
+            this.Controls.Add(this.wshMkr);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.galesCheck);
             this.Controls.Add(this.shadowPokemon);
@@ -923,6 +935,7 @@
         private System.Windows.Forms.ComboBox shadowPokemon;
         private System.Windows.Forms.CheckBox galesCheck;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.CheckBox wshMkr;
     }
 }
 
