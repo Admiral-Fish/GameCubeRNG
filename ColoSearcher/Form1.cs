@@ -84,8 +84,10 @@ namespace ColoSearcher
             uint test = getSearchMethod();
             if (test == 0)
                 getRMethod(ivsLower, ivsUpper);
-            else
+            else if (test == 1)
                 getMethod(ivsLower, ivsUpper);
+            else
+                generateChannel(ivsLower, ivsUpper, getNature());
         }
 
         #region Gales/Colo search
@@ -448,7 +450,7 @@ namespace ColoSearcher
         private void populate(uint seed, uint srange)
         {
             uint s = seed;
-            for (uint x = 0; x < (srange + 10); x++)
+            for (uint x = 0; x < (srange + 12); x++)
             {
                 s = populateRNG(s);
             }
@@ -519,6 +521,178 @@ namespace ColoSearcher
             return pid;
         }
         #endregion
+        #endregion
+
+        #region Channel
+
+        //Credits to Zari and amab for this
+        public void generateChannel(uint[] ivsLower, uint[] ivsUpper, uint nature)
+        {
+            uint s = 0;
+            uint srange = 1048576;
+            isSearching = true;
+
+            if (nature != 0)
+                nature = natures[nature];
+
+            uint ability = getAbility();
+            uint gender = getGender();
+            uint hiddenPower = getHP();
+
+            for (uint z = 0; z < 32; z++)
+            {
+                for (uint h = 0; h < 64; h++)
+                {
+                    populate(s, srange);
+                    for (uint n = 0; n < srange; n++)
+                    {
+                        uint[] ivs = calcIVsChannel(ivsLower, ivsUpper, n);
+                        if (ivs.Length != 1)
+                        {
+                            uint pid = pidChkChannel(n, 0);
+                            uint actualNature = pid % 25;
+                            if (nature == 0 || nature == actualNature)
+                                filterSeedChannel(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)n], pid);
+
+                            pid = pidChkChannel(n, 1);
+                            actualNature = pid % 25;
+                            if (nature == 0 || nature == actualNature)
+                                filterSeedChannel(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, (slist[(int)n] ^ 0x80000000), pid);
+                        }
+                    }
+                    s = slist[(int)srange];
+                    slist.Clear();
+                    rlist.Clear();
+                }
+            }
+            isSearching = false;
+            status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
+        }
+
+        private uint[] calcIVsChannel(uint[] ivsLower, uint[] ivsUpper, uint frame)
+        {
+            uint[] ivs;
+            uint[] iv = { rlist[(int)(frame + 7)], rlist[(int)(frame + 8)], rlist[(int)(frame + 9)], rlist[(int)(frame + 11)], rlist[(int)(frame + 12)], rlist[(int)(frame + 10)] };
+            ivs = createIVsChannel(iv, ivsLower, ivsUpper);
+            return ivs;
+        }
+
+        private uint[] createIVsChannel(uint[] iv, uint[] ivsLower, uint[] ivsUpper)
+        {
+            uint[] ivs = new uint[6];
+
+            for (int x = 0; x < 6; x++)
+            {
+                uint iV = iv[x] >> 11;
+                if (iV >= ivsLower[x] && iV <= ivsUpper[x])
+                    ivs[x] = iV;
+                else
+                {
+                    ivs = new uint[1];
+                    return ivs;
+                }
+            }
+
+            return ivs;
+        }
+
+        private uint pidChkChannel(uint frame, uint xor_val)
+        {
+            uint pid1 = slist[(int)(frame + 2)] + 0x80000000;
+            if (pid1 > 0xFFFFFFFF)
+                pid1 = pid1 & 0xFFFFFFFF;
+            uint pid = ((pid1 >> 16) << 16) + rlist[(int)(frame + 3)];
+            if (xor_val == 1)
+                pid = pid ^ 0x80008000;
+
+            return pid;
+        }
+
+        private void filterSeedChannel(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hiddenPowerValue, uint seed, uint pid)
+        {
+            String shiny = "";
+
+            if (hiddenPowerValue != 0)
+            {
+                uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
+                if (actualHP != (hiddenPowerValue - 1))
+                {
+                    return;
+                }
+            }
+
+            if (ability != 0)
+            {
+                uint actualAbility = pid & 1;
+                if (actualAbility != (ability - 1))
+                {
+                    return;
+                }
+            }
+            ability = pid & 1;
+
+            if (gender != 0)
+            {
+                if (gender == 1)
+                {
+                    if ((pid & 255) < 127)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 2)
+                {
+                    if ((pid & 255) > 126)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 3)
+                {
+                    if ((pid & 255) < 191)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 4)
+                {
+                    if ((pid & 255) > 190)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 5)
+                {
+                    if ((pid & 255) < 64)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 6)
+                {
+                    if ((pid & 255) > 63)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 7)
+                {
+                    if ((pid & 255) < 31)
+                    {
+                        return;
+                    }
+                }
+                else if (gender == 8)
+                {
+                    if ((pid & 255) > 30)
+                    {
+                        return;
+                    }
+                }
+            }
+            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hiddenPowerValue, pid, shiny, seed);
+        }
+
         #endregion
 
         #region Reverse Method 1

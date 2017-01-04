@@ -658,7 +658,8 @@
             this.searchMethod.FormattingEnabled = true;
             this.searchMethod.Items.AddRange(new object[] {
             "Reverse Method 1",
-            "Gales / Colo"});
+            "Gales / Colo",
+            "Channel"});
             this.searchMethod.Location = new System.Drawing.Point(311, 295);
             this.searchMethod.Name = "searchMethod";
             this.searchMethod.Size = new System.Drawing.Size(126, 21);
