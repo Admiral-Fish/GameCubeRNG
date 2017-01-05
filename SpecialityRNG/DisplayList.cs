@@ -26,7 +26,7 @@ namespace SpecialityRNG
 
         public int Spe { get; set; }
 
-        public String Type { get; set; }
+        public String Hidden { get; set; }
 
         public int Power { get; set; }
 

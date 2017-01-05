@@ -29,6 +29,23 @@
         private void InitializeComponent()
         {
             this.k_dataGridView = new System.Windows.Forms.DataGridView();
+            this.Seed = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.PID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Shiny = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Nature = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Ability = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HP = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Atk = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Def = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.SpA = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.SpD = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Spe = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Hidden = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Power = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Eighth = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Quarter = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Half = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Three_Fourths = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Shiny_Check = new System.Windows.Forms.CheckBox();
             this.L_ball = new System.Windows.Forms.Label();
             this.hiddenpower = new System.Windows.Forms.ComboBox();
@@ -106,13 +123,167 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.k_dataGridView.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.ColumnHeader;
-            this.k_dataGridView.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllHeaders;
+            this.k_dataGridView.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
             this.k_dataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.k_dataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Seed,
+            this.PID,
+            this.Shiny,
+            this.Nature,
+            this.Ability,
+            this.HP,
+            this.Atk,
+            this.Def,
+            this.SpA,
+            this.SpD,
+            this.Spe,
+            this.Hidden,
+            this.Power,
+            this.Eighth,
+            this.Quarter,
+            this.Half,
+            this.Three_Fourths});
             this.k_dataGridView.Location = new System.Drawing.Point(12, 379);
             this.k_dataGridView.Name = "k_dataGridView";
             this.k_dataGridView.RowTemplate.Height = 21;
-            this.k_dataGridView.Size = new System.Drawing.Size(1019, 209);
+            this.k_dataGridView.Size = new System.Drawing.Size(1032, 209);
             this.k_dataGridView.TabIndex = 178;
+            // 
+            // Seed
+            // 
+            this.Seed.DataPropertyName = "Seed";
+            this.Seed.HeaderText = "Seed";
+            this.Seed.Name = "Seed";
+            this.Seed.ReadOnly = true;
+            this.Seed.Width = 57;
+            // 
+            // PID
+            // 
+            this.PID.DataPropertyName = "PID";
+            this.PID.HeaderText = "PID";
+            this.PID.Name = "PID";
+            this.PID.ReadOnly = true;
+            this.PID.Width = 50;
+            // 
+            // Shiny
+            // 
+            this.Shiny.DataPropertyName = "Shiny";
+            this.Shiny.HeaderText = "!!!";
+            this.Shiny.Name = "Shiny";
+            this.Shiny.ReadOnly = true;
+            this.Shiny.Width = 41;
+            // 
+            // Nature
+            // 
+            this.Nature.DataPropertyName = "Nature";
+            this.Nature.HeaderText = "Nature";
+            this.Nature.Name = "Nature";
+            this.Nature.ReadOnly = true;
+            this.Nature.Width = 64;
+            // 
+            // Ability
+            // 
+            this.Ability.DataPropertyName = "Ability";
+            this.Ability.HeaderText = "Ability";
+            this.Ability.Name = "Ability";
+            this.Ability.ReadOnly = true;
+            this.Ability.Width = 59;
+            // 
+            // HP
+            // 
+            this.HP.DataPropertyName = "HP";
+            this.HP.HeaderText = "HP";
+            this.HP.Name = "HP";
+            this.HP.ReadOnly = true;
+            this.HP.Width = 47;
+            // 
+            // Atk
+            // 
+            this.Atk.DataPropertyName = "Atk";
+            this.Atk.HeaderText = "Atk";
+            this.Atk.Name = "Atk";
+            this.Atk.ReadOnly = true;
+            this.Atk.Width = 48;
+            // 
+            // Def
+            // 
+            this.Def.DataPropertyName = "Def";
+            this.Def.HeaderText = "Def";
+            this.Def.Name = "Def";
+            this.Def.ReadOnly = true;
+            this.Def.Width = 49;
+            // 
+            // SpA
+            // 
+            this.SpA.DataPropertyName = "SpA";
+            this.SpA.HeaderText = "SpA";
+            this.SpA.Name = "SpA";
+            this.SpA.ReadOnly = true;
+            this.SpA.Width = 52;
+            // 
+            // SpD
+            // 
+            this.SpD.DataPropertyName = "SpD";
+            this.SpD.HeaderText = "SpD";
+            this.SpD.Name = "SpD";
+            this.SpD.ReadOnly = true;
+            this.SpD.Width = 53;
+            // 
+            // Spe
+            // 
+            this.Spe.DataPropertyName = "Spe";
+            this.Spe.HeaderText = "Spe";
+            this.Spe.Name = "Spe";
+            this.Spe.ReadOnly = true;
+            this.Spe.Width = 51;
+            // 
+            // Hidden
+            // 
+            this.Hidden.DataPropertyName = "Hidden";
+            this.Hidden.HeaderText = "Hidden";
+            this.Hidden.Name = "Hidden";
+            this.Hidden.ReadOnly = true;
+            this.Hidden.Width = 66;
+            // 
+            // Power
+            // 
+            this.Power.DataPropertyName = "Power";
+            this.Power.HeaderText = "Power";
+            this.Power.Name = "Power";
+            this.Power.ReadOnly = true;
+            this.Power.Width = 62;
+            // 
+            // Eighth
+            // 
+            this.Eighth.DataPropertyName = "Eighth";
+            this.Eighth.HeaderText = "12.5%F";
+            this.Eighth.Name = "Eighth";
+            this.Eighth.ReadOnly = true;
+            this.Eighth.Width = 67;
+            // 
+            // Quarter
+            // 
+            this.Quarter.DataPropertyName = "Quarter";
+            this.Quarter.HeaderText = "25% F";
+            this.Quarter.Name = "Quarter";
+            this.Quarter.ReadOnly = true;
+            this.Quarter.Width = 61;
+            // 
+            // Half
+            // 
+            this.Half.DataPropertyName = "Half";
+            this.Half.HeaderText = "50% F";
+            this.Half.Name = "Half";
+            this.Half.ReadOnly = true;
+            this.Half.Width = 61;
+            // 
+            // Three_Fourths
+            // 
+            this.Three_Fourths.DataPropertyName = "Three_Fourths";
+            this.Three_Fourths.HeaderText = "75% F";
+            this.Three_Fourths.Name = "Three_Fourths";
+            this.Three_Fourths.ReadOnly = true;
+            this.Three_Fourths.Width = 61;
             // 
             // Shiny_Check
             // 
@@ -508,7 +679,7 @@
             // 
             // search
             // 
-            this.search.Location = new System.Drawing.Point(875, 348);
+            this.search.Location = new System.Drawing.Point(888, 348);
             this.search.Name = "search";
             this.search.Size = new System.Drawing.Size(75, 25);
             this.search.TabIndex = 220;
@@ -641,7 +812,7 @@
             // 
             // cancel
             // 
-            this.cancel.Location = new System.Drawing.Point(956, 348);
+            this.cancel.Location = new System.Drawing.Point(969, 348);
             this.cancel.Name = "cancel";
             this.cancel.Size = new System.Drawing.Size(75, 25);
             this.cancel.TabIndex = 266;
@@ -858,7 +1029,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1043, 622);
+            this.ClientSize = new System.Drawing.Size(1056, 622);
             this.Controls.Add(this.anyHiddenPower);
             this.Controls.Add(this.anyAbility);
             this.Controls.Add(this.anyGender);
@@ -993,6 +1164,23 @@
         private System.Windows.Forms.Button anyGender;
         private System.Windows.Forms.Button anyAbility;
         private System.Windows.Forms.Button anyHiddenPower;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Seed;
+        private System.Windows.Forms.DataGridViewTextBoxColumn PID;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Shiny;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Nature;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Ability;
+        private System.Windows.Forms.DataGridViewTextBoxColumn HP;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Atk;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Def;
+        private System.Windows.Forms.DataGridViewTextBoxColumn SpA;
+        private System.Windows.Forms.DataGridViewTextBoxColumn SpD;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Spe;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Hidden;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Power;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Eighth;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Quarter;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Half;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Three_Fourths;
     }
 }
 

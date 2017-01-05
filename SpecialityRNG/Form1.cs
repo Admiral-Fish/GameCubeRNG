@@ -30,7 +30,7 @@ namespace SpecialityRNG
             searchMethod.SelectedIndex = 0;
             shadowPokemon.SelectedIndex = 0;
             k_dataGridView.DataSource = binding;
-            k_dataGridView.AutoGenerateColumns = true;
+            k_dataGridView.AutoGenerateColumns = false;
         }
 
         private void search_Click(object sender, EventArgs e)
@@ -1302,7 +1302,7 @@ namespace SpecialityRNG
                 SpA = (int)spa,
                 SpD = (int)spd,
                 Spe = (int)spe,
-                Type = hPString,
+                Hidden = hPString,
                 Power = hpPower,
                 Eighth = gender1,
                 Quarter = gender2,
