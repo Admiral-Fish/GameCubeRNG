@@ -14,7 +14,7 @@ namespace SpecialityRNG
         private bool refresh;
         private ThreadDelegate gridUpdate;
         private BindingSource binding = new BindingSource();
-        private List<ColoList> coloList;
+        private List<DisplayList> displayList;
         private bool isSearching = false;
         private List<uint> slist = new List<uint>();
         private List<uint> rlist = new List<uint>();
@@ -60,8 +60,8 @@ namespace SpecialityRNG
                     return;
                 }
 
-                coloList = new List<ColoList>();
-                binding = new BindingSource { DataSource = coloList };
+                displayList = new List<DisplayList>();
+                binding = new BindingSource { DataSource = displayList };
                 k_dataGridView.DataSource = binding;
                 status.Text = "Searching";
                 slist.Clear();
@@ -1289,7 +1289,7 @@ namespace SpecialityRNG
             else
                 gender4 = 'M';
 
-            coloList.Add(new ColoList
+            displayList.Add(new DisplayList
             {
                 Seed = seed.ToString("x").ToUpper(),
                 PID = pid.ToString("x").ToUpper(),
@@ -1302,7 +1302,7 @@ namespace SpecialityRNG
                 SpA = (int)spa,
                 SpD = (int)spd,
                 Spe = (int)spe,
-                HP = hPString,
+                Type = hPString,
                 Power = hpPower,
                 Eighth = gender1,
                 Quarter = gender2,
@@ -1427,6 +1427,26 @@ namespace SpecialityRNG
                 status.Text = "Cancelled. - Awaiting Command";
                 searchThread.Abort();
             }
+        }
+
+        private void anyNature_Click(object sender, EventArgs e)
+        {
+            natureType.SelectedIndex = 0;
+        }
+
+        private void anyGender_Click(object sender, EventArgs e)
+        {
+            genderType.SelectedIndex = 0;
+        }
+
+        private void anyAbility_Click(object sender, EventArgs e)
+        {
+            abilityType.SelectedIndex = 0;
+        }
+
+        private void anyHiddenPower_Click(object sender, EventArgs e)
+        {
+            hiddenpower.SelectedIndex = 0;
         }
         #endregion
     }

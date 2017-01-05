@@ -79,6 +79,10 @@
             this.galesCheck = new System.Windows.Forms.CheckBox();
             this.label4 = new System.Windows.Forms.Label();
             this.wshMkr = new System.Windows.Forms.CheckBox();
+            this.anyNature = new System.Windows.Forms.Button();
+            this.anyGender = new System.Windows.Forms.Button();
+            this.anyAbility = new System.Windows.Forms.Button();
+            this.anyHiddenPower = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.k_dataGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.SpeHigh)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.HPLow)).BeginInit();
@@ -101,11 +105,13 @@
             this.k_dataGridView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.k_dataGridView.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.ColumnHeader;
+            this.k_dataGridView.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllHeaders;
             this.k_dataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.k_dataGridView.Location = new System.Drawing.Point(12, 379);
             this.k_dataGridView.Name = "k_dataGridView";
             this.k_dataGridView.RowTemplate.Height = 21;
-            this.k_dataGridView.Size = new System.Drawing.Size(988, 209);
+            this.k_dataGridView.Size = new System.Drawing.Size(1019, 209);
             this.k_dataGridView.TabIndex = 178;
             // 
             // Shiny_Check
@@ -502,7 +508,7 @@
             // 
             // search
             // 
-            this.search.Location = new System.Drawing.Point(844, 348);
+            this.search.Location = new System.Drawing.Point(875, 348);
             this.search.Name = "search";
             this.search.Size = new System.Drawing.Size(75, 25);
             this.search.TabIndex = 220;
@@ -635,7 +641,7 @@
             // 
             // cancel
             // 
-            this.cancel.Location = new System.Drawing.Point(925, 348);
+            this.cancel.Location = new System.Drawing.Point(956, 348);
             this.cancel.Name = "cancel";
             this.cancel.Size = new System.Drawing.Size(75, 25);
             this.cancel.TabIndex = 266;
@@ -808,11 +814,55 @@
             this.wshMkr.Text = "Wishmkr Jirachi";
             this.wshMkr.UseVisualStyleBackColor = true;
             // 
+            // anyNature
+            // 
+            this.anyNature.Location = new System.Drawing.Point(443, 75);
+            this.anyNature.Name = "anyNature";
+            this.anyNature.Size = new System.Drawing.Size(36, 21);
+            this.anyNature.TabIndex = 275;
+            this.anyNature.Text = "Any";
+            this.anyNature.UseVisualStyleBackColor = true;
+            this.anyNature.Click += new System.EventHandler(this.anyNature_Click);
+            // 
+            // anyGender
+            // 
+            this.anyGender.Location = new System.Drawing.Point(443, 111);
+            this.anyGender.Name = "anyGender";
+            this.anyGender.Size = new System.Drawing.Size(36, 21);
+            this.anyGender.TabIndex = 276;
+            this.anyGender.Text = "Any";
+            this.anyGender.UseVisualStyleBackColor = true;
+            this.anyGender.Click += new System.EventHandler(this.anyGender_Click);
+            // 
+            // anyAbility
+            // 
+            this.anyAbility.Location = new System.Drawing.Point(443, 144);
+            this.anyAbility.Name = "anyAbility";
+            this.anyAbility.Size = new System.Drawing.Size(36, 21);
+            this.anyAbility.TabIndex = 277;
+            this.anyAbility.Text = "Any";
+            this.anyAbility.UseVisualStyleBackColor = true;
+            this.anyAbility.Click += new System.EventHandler(this.anyAbility_Click);
+            // 
+            // anyHiddenPower
+            // 
+            this.anyHiddenPower.Location = new System.Drawing.Point(443, 177);
+            this.anyHiddenPower.Name = "anyHiddenPower";
+            this.anyHiddenPower.Size = new System.Drawing.Size(36, 21);
+            this.anyHiddenPower.TabIndex = 278;
+            this.anyHiddenPower.Text = "Any";
+            this.anyHiddenPower.UseVisualStyleBackColor = true;
+            this.anyHiddenPower.Click += new System.EventHandler(this.anyHiddenPower_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1012, 622);
+            this.ClientSize = new System.Drawing.Size(1043, 622);
+            this.Controls.Add(this.anyHiddenPower);
+            this.Controls.Add(this.anyAbility);
+            this.Controls.Add(this.anyGender);
+            this.Controls.Add(this.anyNature);
             this.Controls.Add(this.wshMkr);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.galesCheck);
@@ -864,6 +914,8 @@
             this.Controls.Add(this.abilityType);
             this.Controls.Add(this.search);
             this.Controls.Add(this.k_dataGridView);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "Form1";
             this.Text = "Speciality RNG";
             ((System.ComponentModel.ISupportInitialize)(this.k_dataGridView)).EndInit();
@@ -937,6 +989,10 @@
         private System.Windows.Forms.CheckBox galesCheck;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.CheckBox wshMkr;
+        private System.Windows.Forms.Button anyNature;
+        private System.Windows.Forms.Button anyGender;
+        private System.Windows.Forms.Button anyAbility;
+        private System.Windows.Forms.Button anyHiddenPower;
     }
 }
 

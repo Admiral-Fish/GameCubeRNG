@@ -2,7 +2,7 @@
 
 namespace SpecialityRNG
 {
-    internal class ColoList
+    internal class DisplayList
     {
         public String Seed { get; set; }
 
@@ -26,7 +26,7 @@ namespace SpecialityRNG
 
         public int Spe { get; set; }
 
-        public String HP { get; set; }
+        public String Type { get; set; }
 
         public int Power { get; set; }
 

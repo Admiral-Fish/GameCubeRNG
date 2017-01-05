@@ -46,7 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ColoList.cs" />
+    <Compile Include="DisplayList.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

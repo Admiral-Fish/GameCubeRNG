@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ColoSearcher.Properties
+namespace SpecialityRNG.Properties
 {
 
 
