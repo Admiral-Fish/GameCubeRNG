@@ -784,7 +784,6 @@ namespace SpecialityRNG
                 }
             }
         }
-        #endregion
 
         private void filterSeedWsh(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint rng1XD, uint rng3XD, uint rng4XD, uint seed)
         {
@@ -885,6 +884,74 @@ namespace SpecialityRNG
 
             addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hP, pid, shiny, seed);
         }
+        #endregion
+
+        #region Search 2
+        private void generateR2(uint[] ivsLower, uint[] ivsUpper, uint nature)
+        {
+            uint s = 0;
+            uint srange = 1048576;
+            isSearching = true;
+
+            if (nature != 0)
+                nature = natures[nature];
+
+            uint ability = getAbility();
+            uint gender = getGender();
+            uint hiddenPower = getHP();
+
+            for (uint z = 0; z < 32; z++)
+            {
+                for (uint h = 0; h < 64; h++)
+                {
+                    populateR(s, srange);
+                    for (uint n = 0; n < srange; n++)
+                    {
+                        uint[] ivs = calcIVsR(ivsLower, ivsUpper, n);
+                        if (ivs.Length != 1)
+                        {
+                            uint pid = pidChkR(n, 0);
+                            uint actualNature = pid % 25;
+                            if (nature == 0 || nature == actualNature)
+                                if (wshMkr.Checked == true)
+                                    filterSeed2Wsh(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)(n)], pid);
+                                else
+                                    filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)(n)], pid);
+
+                            pid = pidChkR(n, 1);
+                            actualNature = pid % 25;
+                            if (nature == 0 || nature == actualNature)
+                                if (wshMkr.Checked == true)
+                                    filterSeed2Wsh(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, (slist[(int)(n)] ^ 0x80000000), pid);
+                                else
+                                    filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, (slist[(int)(n)] ^ 0x80000000), pid);
+                        }
+                    }
+                    s = slist[(int)srange];
+                    slist.Clear();
+                    rlist.Clear();
+                }
+            }
+            isSearching = false;
+            status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
+        }
+
+        private uint populateRNGR(uint seed)
+        {
+            seed = forwardR(seed);
+            slist.Add(seed);
+            rlist.Add((seed >> 16));
+            return seed;
+        }
+
+        private void populateR(uint seed, uint srange)
+        {
+            uint s = seed;
+            for (uint x = 0; x < (srange + 10); x++)
+            {
+                s = populateRNGR(s);
+            }
+        }
 
         private void filterSeed2Wsh(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hiddenPowerValue, uint seed, uint pid)
         {
@@ -980,73 +1047,6 @@ namespace SpecialityRNG
                 }
             }
             addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, hiddenPowerValue, pid, shiny, seed);
-        }
-
-        #region Search 2
-        private void generateR2(uint[] ivsLower, uint[] ivsUpper, uint nature)
-        {
-            uint s = 0;
-            uint srange = 1048576;
-            isSearching = true;
-
-            if (nature != 0)
-                nature = natures[nature];
-
-            uint ability = getAbility();
-            uint gender = getGender();
-            uint hiddenPower = getHP();
-
-            for (uint z = 0; z < 32; z++)
-            {
-                for (uint h = 0; h < 64; h++)
-                {
-                    populateR(s, srange);
-                    for (uint n = 0; n < srange; n++)
-                    {
-                        uint[] ivs = calcIVsR(ivsLower, ivsUpper, n);
-                        if (ivs.Length != 1)
-                        {
-                            uint pid = pidChkR(n, 0);
-                            uint actualNature = pid % 25;
-                            if (nature == 0 || nature == actualNature)
-                                if (wshMkr.Checked == true)
-                                    filterSeed2Wsh(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)(n)], pid);
-                                else
-                                    filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, slist[(int)(n)], pid);
-
-                            pid = pidChkR(n, 1);
-                            actualNature = pid % 25;
-                            if (nature == 0 || nature == actualNature)
-                                if (wshMkr.Checked == true)
-                                    filterSeed2Wsh(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, (slist[(int)(n)] ^ 0x80000000), pid);
-                                else
-                                    filterSeed2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], actualNature, ability, gender, hiddenPower, (slist[(int)(n)] ^ 0x80000000), pid);
-                        }
-                    }
-                    s = slist[(int)srange];
-                    slist.Clear();
-                    rlist.Clear();
-                }
-            }
-            isSearching = false;
-            status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
-        }
-
-        private uint populateRNGR(uint seed)
-        {
-            seed = forwardR(seed);
-            slist.Add(seed);
-            rlist.Add((seed >> 16));
-            return seed;
-        }
-
-        private void populateR(uint seed, uint srange)
-        {
-            uint s = seed;
-            for (uint x = 0; x < (srange + 10); x++)
-            {
-                s = populateRNGR(s);
-            }
         }
 
         private uint[] calcIVsR(uint[] ivsLower, uint[] ivsUpper, uint frame)
@@ -1159,94 +1159,37 @@ namespace SpecialityRNG
 
         private uint forward(uint seed)
         {
-            seed *= 0x343FD;
-            seed += 0x269EC3;
-            seed &= 0xFFFFFFFF;
-            return seed;
+            return ((seed * 0x343FD + 0x269EC3) & 0xFFFFFFFF);
         }
 
         private uint reverse(uint seed)
         {
-            seed *= 0xB9B33155;
-            seed += 0xA170F641;
-            seed &= 0xFFFFFFFF;
-            return seed;
+            return ((seed * 0xB9B33155 + 0xA170F641) & 0xFFFFFFFF);
         }
 
         private uint forwardR(uint seed)
         {
-            seed *= 0x41c64e6d;
-            seed += 0x6073;
-            seed &= 0xFFFFFFFF;
-            return seed;
+            return ((seed * 0x41c64e6d + 0x6073) & 0xFFFFFFFF);
         }
 
         private uint reverseR(uint seed)
         {
-            seed *= 0xeeb9eb65;
-            seed += 0xa3561a1;
-            seed &= 0xFFFFFFFF;
-            return seed;
+            return ((seed * 0xeeb9eb65 + 0xa3561a1) & 0xFFFFFFFF);
         }
 
         private int calcHPPower(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
-            int ret = 0;
-
-            uint hpMod = hp & 3;
-            if (hpMod == 2 || hpMod == 3)
-                hpMod = 1;
-            else
-                hpMod = 0;
-            uint atkMod = atk & 3;
-            if (atkMod == 2 || atkMod == 3)
-                atkMod = 1;
-            else
-                atkMod = 0;
-            uint defMod = def & 3;
-            if (defMod == 2 || defMod == 3)
-                defMod = 1;
-            else
-                defMod = 0;
-            uint spaMod = spa & 3;
-            if (spaMod == 2 || spaMod == 3)
-                spaMod = 1;
-            else
-                spaMod = 0;
-            uint spdMod = spd & 3;
-            if (spdMod == 2 || spdMod == 3)
-                spdMod = 1;
-            else
-                spdMod = 0;
-            uint speMod = spe & 3;
-            if (speMod == 2 || speMod == 3)
-                speMod = 1;
-            else
-                speMod = 0;
-
-            uint test = hpMod + atkMod*2 + defMod*4 + speMod*8 + spaMod*16 + spdMod*32;
-            test *= 40;
-            test /= 63;
-            test += 30;
-
-            ret = (int)test;
-
-            return ret;
+            return (int)(30 + ((((hp >> 1) & 1) + 2 * ((atk >> 1) & 1) + 4 * ((def >> 1) & 1) + 8 * ((spe >> 1) & 1) + 16 * ((spa >> 1) & 1) + 32 * ((spd >> 1) & 1)) * 40 / 63));
         }
 
         private bool isShiny(uint PID)
         {
-            uint test = ((PID >> 16) ^ (PID & 0xffff)) >> 3;
-            return test == shinyval;
+            return (((PID >> 16) ^ (PID & 0xffff)) >> 3) == shinyval;
         }
 
         private uint calcHP(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
-            uint ret = 0;
-
-            ret = ((((hp & 1) + 2*(atk & 1) + 4*(def & 1) + 8*(spe & 1) + 16*(spa & 1) + 32*(spd & 1)) * 15) / 63);
-
-            return ret;
+            return ((((hp & 1) + 2*(atk & 1) + 4*(def & 1) + 8*(spe & 1) + 16*(spa & 1) + 32*(spd & 1)) * 15) / 63);
         }
         #endregion
 
