@@ -1,6 +1,9 @@
-# SpecialityRNG
+# GameCubeRNG
+See https://github.com/Admiral-Fish/RNGReporter for the most up to date version of GameCubeRNG
 
-This is program is designed to help aid in the RNG of Pokémon Gales of Darkness, Colosseum, Box, Colo Bonus Disc Jirachi, and Channel Jirachi.
+# Credits
+Original RNGReporter dev team the RNGReporter functions used
 
+Credits to amab for all the Channel Jirachi logic 
 
-This project is probably not gonna be developed anymore. See https://github.com/Admiral-Fish/RNGReporter
+Credits to Zari for the GameCube RNG searching logic, and generally other advice

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SpecialityRNG.Properties
+namespace GameCubeRNG.Properties
 {
 
 

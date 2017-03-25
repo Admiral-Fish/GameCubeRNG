@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SpecialityRNG
+namespace GameCubeRNG
 {
     internal class DisplayList
     {
@@ -37,6 +37,8 @@ namespace SpecialityRNG
         public char Half { get; set; }
 
         public char Three_Fourths { get; set; }
+
+        public String Reason { get; set; }
     }
 
 }
