@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
+using GameCubeRNG.Objects;
+using GameCubeRNG.Properties;
 using System.Linq;
 using System.ComponentModel;
 using System.IO;
-using GameCubeRNG.Objects;
 
 namespace GameCubeRNG
 {
@@ -25,6 +26,7 @@ namespace GameCubeRNG
         private uint[] natureLock;
         private int forwardCounter;
         private int backwardCounter;
+        private uint searchNumber;
         private static List<uint> natureList;
         private static List<uint> hiddenPowerList;
         private static bool galesFlag = false;
@@ -79,8 +81,7 @@ namespace GameCubeRNG
         #region Start search
         private void search_Click(object sender, EventArgs e)
         {
-            uint[] ivsLower, ivsUpper;
-            getIVs(out ivsLower, out ivsUpper);
+            getIVs(out uint[] ivsLower, out uint[] ivsUpper);
             galesFlag = false;
 
             if (ivsLower[0] > ivsUpper[0])
@@ -130,6 +131,7 @@ namespace GameCubeRNG
                 forwardCounter = 0;
                 backwardCounter = 0;
                 shinyval = (uint.Parse(id.Text) ^ uint.Parse(sid.Text)) >> 3;
+                searchNumber = getSearchMethod();
 
                 if (galesCheck.Checked)
                     Reason.Visible = true;
@@ -146,15 +148,14 @@ namespace GameCubeRNG
 
         private void getSearch(uint[] ivsLower, uint[] ivsUpper)
         {
-            uint test = getSearchMethod();
-            if (test == 0)
+            if (searchNumber == 0)
             {
                 if (wshMkr.Checked)
                     generateWishmkr(ivsLower, ivsUpper);
                 else
                     getRMethod(ivsLower, ivsUpper);
             }
-            else if (test == 1)
+            else if (searchNumber == 1)
             {
                 if (galesCheck.Checked == true)
                     getGalesMethod(ivsLower, ivsUpper);
@@ -1419,7 +1420,7 @@ namespace GameCubeRNG
         private void checkSeedChannel(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint ability, uint gender)
         {
             uint x16 = spd << 27;
-            uint upper = x16 + 0x7ffffff + (31 - spd);
+            uint upper = x16 + 0x7ffffff;
 
             while (x16 < upper)
             {
@@ -1448,12 +1449,17 @@ namespace GameCubeRNG
                                     uint pid1 = reverseXD(pid2);
                                     uint sid = reverseXD(pid1);
                                     uint seed = reverseXD(sid);
-                                    uint pid = (((pid1 >> 16) << 16) | (pid2 >> 16)) ^ 0x80000000;
-                                    if (Functions.Shiny(pid, 40122, (ushort)(sid >> 16)))
+                                    pid2 >>= 16;
+                                    pid1 >>= 16;
+                                    uint pid = (pid1 << 16) | pid2;
+                                    if ((pid2 > 7 ? 0 : 1) != (pid1 ^ (sid >> 16) ^ 40122))
                                         pid ^= 0x80000000;
                                     uint nature = pid == 0 ? 0 : pid - 25 * (pid / 25);
                                     if (natureList == null || natureList.Contains(nature))
+                                    {
+                                        shinyval = (40122 ^ (sid >> 16)) >> 3;
                                         filterSeedChannel(hp, atk, def, spa, spd, spe, ability, gender, seed, pid, nature);
+                                    }
                                 }
                             }
                         }
@@ -1484,18 +1490,24 @@ namespace GameCubeRNG
                         uint[] ivs = calcIVsChannel(ivsLower, ivsUpper, n, 0);
                         if (ivs.Length != 1)
                         {
-                            uint pid = pidChkChannel(n, 0, rlist[(int)n + 1]);
+                            uint pid = pidChkChannel(rlist[(int)(n + 2)], rlist[(int)(n + 3)], rlist[(int)n + 1]);
                             uint actualNature = pid == 0 ? 0 : pid - 25 * (pid / 25);
                             if (natureList == null || natureList.Contains(actualNature))
+                            {
+                                shinyval = (40122 ^ rlist[(int)n + 1]) >> 3;
                                 filterSeedChannel(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, slist[(int)n], pid, actualNature);
+                            }
 
                             ivs = calcIVsChannel(ivsLower, ivsUpper, n, 1);
                             if (ivs.Length != 1)
                             {
-                                pid = pidChkChannel(n, 1, rlist[(int)n + 1] ^ 0x8000);
+                                pid = pidChkChannel(rlist[(int)(n + 2)] ^ 0x8000, rlist[(int)(n + 3)] ^ 0x8000, rlist[(int)n + 1] ^ 0x8000);
                                 actualNature = pid == 0 ? 0 : pid - 25 * (pid / 25);
                                 if (natureList == null || natureList.Contains(actualNature))
+                                {
+                                    shinyval = (40122 ^ (rlist[(int)n + 1] ^ 0x8000)) >> 3;
                                     filterSeedChannel(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, (slist[(int)n] ^ 0x80000000), pid, actualNature);
+                                }
                             }
                         }
                     }
@@ -1545,20 +1557,23 @@ namespace GameCubeRNG
             return ivs;
         }
 
-        private uint pidChkChannel(uint frame, uint xor_val, uint sid)
+        private uint pidChkChannel(uint pid1, uint pid2, uint sid)
         {
-            uint pid = ((rlist[(int)(frame + 2)] ^ 0x8000) << 16) | rlist[(int)(frame + 3)];
-            if (Functions.Shiny(pid, 40122, (ushort)sid))
+            uint pid = pid1 << 16 | pid2;
+            if ((pid2 > 7 ? 0 : 1) != (pid1 ^ sid ^ 40122))
                 pid ^= 0x80000000;
-            if (xor_val == 1)
-                pid = pid ^ 0x80008000;
-
             return pid;
         }
 
         private void filterSeedChannel(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint ability, uint gender, uint seed, uint pid, uint nature)
         {
             String shiny = "";
+            if (Shiny_Check.Checked == true)
+            {
+                if (!isShiny(pid))
+                    return;
+                shiny = "!!!";
+            }
 
             uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
             if (hiddenPowerList != null)
@@ -1854,22 +1869,15 @@ namespace GameCubeRNG
         {
             IVsLower = new uint[6];
             IVsUpper = new uint[6];
+            uint[] ivs = new uint[6];
 
-            uint hp = 0;
-            uint atk = 0;
-            uint def = 0;
-            uint spa = 0;
-            uint spd = 0;
-            uint spe = 0;
+            uint.TryParse(hpValue.Text, out ivs[0]);
+            uint.TryParse(atkValue.Text, out ivs[1]);
+            uint.TryParse(defValue.Text, out ivs[2]);
+            uint.TryParse(spaValue.Text, out ivs[3]);
+            uint.TryParse(spdValue.Text, out ivs[4]);
+            uint.TryParse(speValue.Text, out ivs[5]);
 
-            uint.TryParse(hpValue.Text, out hp);
-            uint.TryParse(atkValue.Text, out atk);
-            uint.TryParse(defValue.Text, out def);
-            uint.TryParse(spaValue.Text, out spa);
-            uint.TryParse(spdValue.Text, out spd);
-            uint.TryParse(speValue.Text, out spe);
-
-            uint[] ivs = { hp, atk, def, spa, spd, spe };
             int[] ivsLogic = { hpLogic.SelectedIndex, atkLogic.SelectedIndex, defLogic.SelectedIndex, spaLogic.SelectedIndex, spdLogic.SelectedIndex, speLogic.SelectedIndex };
 
             for (int x = 0; x < 6; x++)
@@ -2363,7 +2371,7 @@ namespace GameCubeRNG
             else
             {
                 wshMkr.Visible = false;
-                Shiny_Check.Visible = false;
+                Shiny_Check.Visible = true;
                 shadowMethodLabel.Visible = false;
                 comboBoxShadowMethod.Visible = false;
                 anyShadowMethod.Visible = false;
@@ -2389,6 +2397,24 @@ namespace GameCubeRNG
             }
         }
 
+        private void dataGridViewValues_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                DataGridView.HitTestInfo hti = dataGridViewResult.HitTest(e.X, e.Y);
+
+                if (hti.Type == DataGridViewHitTestType.Cell)
+                {
+                    if (!((dataGridViewResult.Rows[hti.RowIndex])).Selected)
+                    {
+                        dataGridViewResult.ClearSelection();
+
+                        (dataGridViewResult.Rows[hti.RowIndex]).Selected = true;
+                    }
+                }
+            }
+        }
+
         private void outputResultsToTXTToolStripMenuItem_Click(object sender, EventArgs e)
         {
             StreamWriter file = new System.IO.StreamWriter("rngreporter.txt");
@@ -2410,6 +2436,25 @@ namespace GameCubeRNG
             }
             file.Close();
             MessageBox.Show("Results exported to folder with RNGReporter.exe");
+        }
+
+        private void dataGridViewResult_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (dataGridViewResult.DataSource != null && displayList != null && binding != null)
+            {
+                DataGridViewColumn selectedColumn = dataGridViewResult.Columns[e.ColumnIndex];
+
+                var idisplayListComparer = new IDisplayListComparator
+                { CompareType = selectedColumn.DataPropertyName };
+
+                if (selectedColumn.HeaderCell.SortGlyphDirection == SortOrder.Ascending)
+                    idisplayListComparer.sortOrder = SortOrder.Descending;
+
+                displayList.Sort(idisplayListComparer);
+
+                binding.ResetBindings(false);
+                selectedColumn.HeaderCell.SortGlyphDirection = idisplayListComparer.sortOrder;
+            }
         }
         #endregion
 

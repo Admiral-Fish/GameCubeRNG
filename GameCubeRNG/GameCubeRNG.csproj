@@ -84,7 +84,7 @@
     <Compile Include="Controls\PopupComboBox.designer.cs">
       <DependentUpon>PopupComboBox.cs</DependentUpon>
     </Compile>
-    <Compile Include="DisplayList.cs" />
+    <Compile Include="Objects\DisplayList.cs" />
     <Compile Include="GameCube.cs">
       <SubType>Form</SubType>
     </Compile>
