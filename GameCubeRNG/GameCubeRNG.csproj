@@ -92,6 +92,9 @@
       <DependentUpon>GameCube.cs</DependentUpon>
     </Compile>
     <Compile Include="Objects\Functions.cs" />
+    <Compile Include="Objects\IRNG.cs" />
+    <Compile Include="Objects\LCRNG.cs" />
+    <Compile Include="Objects\NatureLock.cs" />
     <Compile Include="Objects\Nature.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
