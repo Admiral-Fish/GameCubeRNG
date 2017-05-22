@@ -71,22 +71,6 @@ namespace GameCubeRNG.Objects
         }
     }
 
-    internal class PokeRng : GenericRng
-    {
-        public PokeRng(uint seed)
-            : base(seed, 0x41c64e6d, 0x6073)
-        {
-        }
-    }
-
-    internal class PokeRngR : GenericRng
-    {
-        public PokeRngR(uint seed)
-            : base(seed, 0xeeb9eb65, 0xa3561a1)
-        {
-        }
-    }
-
     internal class XdRng : GenericRng
     {
         public XdRng(uint seed)
@@ -100,84 +84,6 @@ namespace GameCubeRNG.Objects
         public XdRngR(uint seed)
             : base(seed, 0xB9B33155, 0xA170F641)
         {
-        }
-    }
-
-    internal class ARng : GenericRng
-    {
-        public ARng(uint seed)
-            : base(seed, 0x6c078965, 0x01)
-        {
-        }
-    }
-
-    internal class ARngR : GenericRng
-    {
-        public ARngR(uint seed)
-            : base(seed, 0x9638806d, 0x69c77f93)
-        {
-        }
-    }
-
-    internal class GRng : GenericRng
-    {
-        public GRng(uint seed)
-            : base(seed, 0x45, 0x1111)
-        {
-        }
-
-        public override uint GetNext32BitNumber()
-        {
-            Seed = (Seed * mult + add) & 0x7fffffff;
-
-            return Seed;
-        }
-    }
-
-    internal class GRngR : GenericRng
-    {
-        public GRngR(uint seed)
-            : base(seed, 0x233f128d, 0x789467a3)
-        {
-        }
-
-        public override uint GetNext32BitNumber()
-        {
-            Seed = (Seed * mult + add) & 0x7fffffff;
-
-            return Seed;
-        }
-    }
-
-    internal class EncounterRng : GenericRng
-    {
-        public EncounterRng(uint seed)
-            : base(seed, 0x41c64e6d, 0x3039)
-        {
-        }
-    }
-
-    internal class EncounterRngR : GenericRng
-    {
-        public EncounterRngR(uint seed)
-            : base(seed, 0xeeb9eb65, 0xfc77a683)
-        {
-        }
-    }
-
-    internal class MersenneTwisterTable : GenericRng
-    {
-        public MersenneTwisterTable(uint seed)
-            : base(seed, 0x6c078965, 0x01)
-        {
-        }
-
-        public override uint GetNext32BitNumber()
-        {
-            Seed = (Seed ^ (Seed >> 30)) * mult + add;
-            add = (add + 1) % 624;
-
-            return Seed;
         }
     }
 }
