@@ -6,6 +6,7 @@ using GameCubeRNG.Objects;
 using System.Linq;
 using System.ComponentModel;
 using System.IO;
+using System.Globalization;
 
 namespace GameCubeRNG
 {
@@ -243,87 +244,62 @@ namespace GameCubeRNG
                     uint pid2 = forwardXD(pid1);
                     uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
                     uint nature = pid - 25 * (pid / 25);
+                    uint galesSeed = reverseXD(seedb);
+                    bool pass = (natureList == null || natureList.Contains(nature)) ? true : false;
 
-                    if (natureList == null || natureList.Contains(nature))
+                    uint xorSeed = galesSeed ^ 0x80000000;
+                    uint xorPID = pid ^= 0x80008000;
+                    uint xorNature = xorPID - 25 * (xorPID / 25);
+                    bool xorPass = (natureList == null || natureList.Contains(xorNature)) ? true : false;
+
+                    switch (shadow)
                     {
-                        uint coloSeed = reverseXD(seedb);
-                        switch (shadow)
-                        {
-                            //No NL
-                            case 0:
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed, 0);
-                                break;
-                            //First shadow
-                            case 1:
-                                bool cont = natureLock.method1FirstShadow(coloSeed);
-                                if (cont)
-                                    filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed, 0);
-                                else
-                                {
-                                    coloSeed ^= 0x80000000;
-                                    cont = natureLock.method1FirstShadow(coloSeed);
-                                    if (cont)
-                                    {
-                                        pid ^= 0x80008000;
-                                        nature = pid - 25 * (pid / 25);
-                                        filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed, 0);
-                                    }
-                                }
-                                break;
-                            //Second shadow
-                            case 6:
-                                cont = natureLock.method1SecondShadowSet(coloSeed);
-                                if (cont)
-                                    filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed, 1);
-                                else
-                                {
-                                    cont = natureLock.method1SecondShadowSet(coloSeed ^= 0x80000000);
-                                    if (cont)
-                                    {
-                                        pid ^= 0x80008000;
-                                        nature = pid - 25 * (pid / 25);
-                                        filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed ^ 0x80000000, 1);
-                                    }
-                                }
+                        //No NL
+                        case 0:
+                            if (pass)
+                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, galesSeed, 0);
 
-                                if (cont)
-                                    continue;
-
-                                cont = natureLock.method1SecondShadowUnset(coloSeed);
-                                if (cont)
-                                    filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed, 2);
-                                else
-                                {
-                                    cont = natureLock.method1SecondShadowUnset(coloSeed ^ 0x80000000);
-                                    if (cont)
-                                    {
-                                        pid ^= 0x80008000;
-                                        nature = pid - 25 * (pid / 25);
-                                        filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed ^ 0x80000000, 2);
-                                    }
-                                }
-
-                                if (cont)
-                                    continue;
-
-                                cont = natureLock.method1SecondShadowShinySkip(coloSeed);
-                                if (cont)
-                                    filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed, 3);
-                                else
-                                {
-                                    coloSeed ^= 0x80000000;
-                                    cont = natureLock.method1SecondShadowShinySkip(coloSeed);
-                                    if (cont)
-                                    {
-                                        pid ^= 0x80008000;
-                                        nature = pid - 25 * (pid / 25);
-                                        filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed, 3);
-                                    }
-                                }
-
-                                break;
-
-                        }
+                            if (xorPass)
+                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, xorPID, xorNature, xorSeed, 0);
+                            break;
+                        //First shadow
+                        case 1:
+                            if (pass && natureLock.method1FirstShadow(galesSeed))
+                            {
+                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, galesSeed, 0);
+                            }
+                            else if (xorPass && natureLock.method1FirstShadow(xorSeed))
+                            {
+                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, xorPID, xorNature, xorSeed, 0);
+                            }
+                            break;
+                        //Second shadow
+                        case 6:
+                            if (pass && natureLock.method1SecondShadowSet(galesSeed))
+                            {
+                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, galesSeed, 1);
+                            }
+                            else if (xorPass && natureLock.method1SecondShadowSet(xorSeed))
+                            {
+                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, xorPID, xorNature, xorSeed, 1);
+                            }
+                            else if (pass && natureLock.method1SecondShadowUnset(galesSeed))
+                            {
+                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, galesSeed, 2);
+                            }
+                            else if (xorPass && natureLock.method1SecondShadowUnset(xorSeed))
+                            {
+                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, xorPID, xorNature, xorSeed, 2);
+                            }
+                            else if (pass && natureLock.method1SecondShadowShinySkip(galesSeed))
+                            {
+                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, galesSeed, 3);
+                            }
+                            else if (xorPass && natureLock.method1SecondShadowShinySkip(xorSeed))
+                            {
+                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, xorPID, xorNature, xorSeed, 3);
+                            }
+                            break;
                     }
                 }
             }
@@ -1337,7 +1313,6 @@ namespace GameCubeRNG
                 MessageBox.Show("Spe: Lower limit > Upper limit");
             else
             {
-                dataGridShadow.Rows.Clear();
                 if (isSearching)
                 {
                     status.Text = "Previous search is still running";
@@ -1360,7 +1335,7 @@ namespace GameCubeRNG
 
                 uint.TryParse(maskedTextBoxStartingFrame.Text, out uint initialFrame);
                 uint.TryParse(maskedTextBoxMaxFrames.Text, out uint maxFrame);
-                uint.TryParse(textBoxSeed.Text, out uint seed);
+                uint.TryParse(textBoxSeed.Text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out uint seed);
                 int shadowMethod = comboBoxMethodShadow.SelectedIndex;
                 uint gender = (uint)comboBoxGenderShadow.SelectedIndex;
                 uint ability = (uint)comboBoxAbilityShadow.SelectedIndex;
@@ -1368,22 +1343,17 @@ namespace GameCubeRNG
                 shadow = natureLock.getType();
 
                 shadowDisplay = new List<ShadowDisplay>();
-                binding = new BindingSource { DataSource = shadowDisplay };
-                dataGridShadow.DataSource = binding;
                 status.Text = "Searching";
 
                 searchThread = new Thread[1];
                 searchThread[0] = new Thread(() => shadowSearch(ivsLower, ivsUpper, initialFrame, maxFrame, seed, shadowMethod, gender, ability));
                 searchThread[0].Start();
-                var update = new Thread(updateGUI2);
-                update.Start();
             }
         }
 
         private void shadowSearch(uint[] ivsLower, uint[] ivsUpper, uint initialFrame, uint maxFrame, uint inSeed, int secondMethod, uint gender, uint ability)
         {
             var rng = new XdRng(inSeed);
-            var hunt = new XdRng(0);
 
             for (uint cnt = 1; cnt < initialFrame; cnt++)
                 rng.GetNext32BitNumber();
@@ -1498,6 +1468,7 @@ namespace GameCubeRNG
                     break;
             }
             isSearching = false;
+            dataGridShadow.Invoke((MethodInvoker)(() => dataGridShadow.DataSource = shadowDisplay));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
         }
 
@@ -1763,36 +1734,6 @@ namespace GameCubeRNG
                 Invoke(resizeGrid);
             }
         }
-
-        private void updateGUI2()
-        {
-            gridUpdate = dataGridUpdate;
-            ThreadDelegate resizeGrid = dataGridShadow.AutoResizeColumns;
-            try
-            {
-                bool alive = true;
-                while (alive)
-                {
-                    if (refresh)
-                    {
-                        Invoke(gridUpdate);
-                        refresh = false;
-                    }
-                    if (searchThread == null || !isSearching)
-                    {
-                        alive = false;
-                    }
-
-                    Thread.Sleep(500);
-                }
-            }
-            finally
-            {
-                Invoke(gridUpdate);
-                Invoke(resizeGrid);
-            }
-        }
-
 
         #region Nested type: ThreadDelegate
 
