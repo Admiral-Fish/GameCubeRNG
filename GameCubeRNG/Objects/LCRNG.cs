@@ -58,9 +58,9 @@ namespace GameCubeRNG.Objects
 
         #endregion
 
-        public ushort GetNext16BitNumber()
+        public uint GetNext16BitNumber()
         {
-            return (ushort)(GetNext32BitNumber() >> 16);
+            return (GetNext32BitNumber() >> 16);
         }
 
         public virtual uint GetNext32BitNumber()
@@ -74,6 +74,22 @@ namespace GameCubeRNG.Objects
         {
             for (int i = 0; i < num; i++)
                 GetNext32BitNumber();
+        }
+    }
+
+    internal class PokeRng : GenericRng
+    {
+        public PokeRng(uint seed)
+            : base(seed, 0x41c64e6d, 0x6073)
+        {
+        }
+    }
+
+    internal class PokeRngR : GenericRng
+    {
+        public PokeRngR(uint seed)
+            : base(seed, 0xeeb9eb65, 0xa3561a1)
+        {
         }
     }
 

@@ -29,13 +29,12 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            GameCubeRNG.Controls.CheckBoxProperties checkBoxProperties6 = new GameCubeRNG.Controls.CheckBoxProperties();
             GameCubeRNG.Controls.CheckBoxProperties checkBoxProperties1 = new GameCubeRNG.Controls.CheckBoxProperties();
             GameCubeRNG.Controls.CheckBoxProperties checkBoxProperties2 = new GameCubeRNG.Controls.CheckBoxProperties();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             GameCubeRNG.Controls.CheckBoxProperties checkBoxProperties3 = new GameCubeRNG.Controls.CheckBoxProperties();
             GameCubeRNG.Controls.CheckBoxProperties checkBoxProperties4 = new GameCubeRNG.Controls.CheckBoxProperties();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.Shiny_Check = new System.Windows.Forms.CheckBox();
             this.L_ball = new System.Windows.Forms.Label();
             this.genderType = new System.Windows.Forms.ComboBox();
@@ -66,30 +65,9 @@
             this.spaLogic = new System.Windows.Forms.ComboBox();
             this.spdLogic = new System.Windows.Forms.ComboBox();
             this.speLogic = new System.Windows.Forms.ComboBox();
-            this.shadowMethodLabel = new System.Windows.Forms.Label();
-            this.anyShadowMethod = new GameCubeRNG.GlassButton();
-            this.comboBoxShadowMethod = new GameCubeRNG.Controls.CheckBoxComboBox();
             this.comboBoxHiddenPower = new GameCubeRNG.Controls.CheckBoxComboBox();
             this.comboBoxNature = new GameCubeRNG.Controls.CheckBoxComboBox();
             this.dataGridViewResult = new GameCubeRNG.DoubleBufferedDataGridView();
-            this.dataGridViewTextBoxColumn0 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.HiddenPowerPower = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.f125 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.f25 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.f50 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.f75 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Reason = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.spe30Above = new GameCubeRNG.GlassButton();
             this.spe30Quick = new GameCubeRNG.GlassButton();
             this.spe31Quick = new GameCubeRNG.GlassButton();
@@ -215,6 +193,24 @@
             this.spaNearMaxShadow = new GameCubeRNG.GlassButton();
             this.spaLogicShadow = new System.Windows.Forms.ComboBox();
             this.spaMaxShadow = new GameCubeRNG.GlassButton();
+            this.dataGridViewTextBoxColumn0 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HiddenPowerPower = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.f125 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.f25 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.f50 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.f75 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Reason = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.contextMenuStripGrid.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewResult)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -403,7 +399,7 @@
             this.status.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.status.Location = new System.Drawing.Point(12, 593);
             this.status.Name = "status";
-            this.status.Size = new System.Drawing.Size(97, 20);
+            this.status.Size = new System.Drawing.Size(257, 20);
             this.status.TabIndex = 267;
             this.status.Text = "Awaiting Command";
             this.status.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -637,42 +633,6 @@
             this.speLogic.Size = new System.Drawing.Size(41, 21);
             this.speLogic.TabIndex = 313;
             // 
-            // shadowMethodLabel
-            // 
-            this.shadowMethodLabel.Location = new System.Drawing.Point(719, 107);
-            this.shadowMethodLabel.Name = "shadowMethodLabel";
-            this.shadowMethodLabel.Size = new System.Drawing.Size(87, 20);
-            this.shadowMethodLabel.TabIndex = 321;
-            this.shadowMethodLabel.Text = "Method";
-            this.shadowMethodLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            // 
-            // anyShadowMethod
-            // 
-            this.anyShadowMethod.BackColor = System.Drawing.Color.AntiqueWhite;
-            this.anyShadowMethod.ForeColor = System.Drawing.Color.Black;
-            this.anyShadowMethod.Location = new System.Drawing.Point(989, 106);
-            this.anyShadowMethod.Name = "anyShadowMethod";
-            this.anyShadowMethod.OuterBorderColor = System.Drawing.Color.Transparent;
-            this.anyShadowMethod.ShineColor = System.Drawing.SystemColors.Window;
-            this.anyShadowMethod.Size = new System.Drawing.Size(33, 23);
-            this.anyShadowMethod.TabIndex = 323;
-            this.anyShadowMethod.Text = "Any";
-            this.anyShadowMethod.Click += new System.EventHandler(this.anyShadowMethod_Click);
-            // 
-            // comboBoxShadowMethod
-            // 
-            this.comboBoxShadowMethod.BlankText = "Any";
-            checkBoxProperties6.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.comboBoxShadowMethod.CheckBoxProperties = checkBoxProperties6;
-            this.comboBoxShadowMethod.DisplayMemberSingleItem = "";
-            this.comboBoxShadowMethod.DropDownHeight = 90;
-            this.comboBoxShadowMethod.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBoxShadowMethod.FormattingEnabled = true;
-            this.comboBoxShadowMethod.Location = new System.Drawing.Point(812, 107);
-            this.comboBoxShadowMethod.Name = "comboBoxShadowMethod";
-            this.comboBoxShadowMethod.Size = new System.Drawing.Size(171, 21);
-            this.comboBoxShadowMethod.TabIndex = 322;
-            // 
             // comboBoxHiddenPower
             // 
             this.comboBoxHiddenPower.BlankText = "Any";
@@ -747,150 +707,6 @@
             this.dataGridViewResult.TabIndex = 317;
             this.dataGridViewResult.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dataGridViewResult_ColumnHeaderMouseClick);
             this.dataGridViewResult.MouseDown += new System.Windows.Forms.MouseEventHandler(this.dataGridViewValues_MouseDown);
-            // 
-            // dataGridViewTextBoxColumn0
-            // 
-            this.dataGridViewTextBoxColumn0.DataPropertyName = "Seed";
-            this.dataGridViewTextBoxColumn0.HeaderText = "Seed";
-            this.dataGridViewTextBoxColumn0.Name = "dataGridViewTextBoxColumn0";
-            this.dataGridViewTextBoxColumn0.ReadOnly = true;
-            // 
-            // dataGridViewTextBoxColumn1
-            // 
-            this.dataGridViewTextBoxColumn1.DataPropertyName = "PID";
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Consolas", 8.75F);
-            this.dataGridViewTextBoxColumn1.DefaultCellStyle = dataGridViewCellStyle3;
-            this.dataGridViewTextBoxColumn1.HeaderText = "PID";
-            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
-            this.dataGridViewTextBoxColumn1.ReadOnly = true;
-            this.dataGridViewTextBoxColumn1.Width = 75;
-            // 
-            // dataGridViewTextBoxColumn2
-            // 
-            this.dataGridViewTextBoxColumn2.DataPropertyName = "Shiny";
-            this.dataGridViewTextBoxColumn2.HeaderText = "!!!";
-            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
-            this.dataGridViewTextBoxColumn2.ReadOnly = true;
-            this.dataGridViewTextBoxColumn2.Width = 25;
-            // 
-            // dataGridViewTextBoxColumn3
-            // 
-            this.dataGridViewTextBoxColumn3.DataPropertyName = "Nature";
-            this.dataGridViewTextBoxColumn3.HeaderText = "Nature";
-            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
-            this.dataGridViewTextBoxColumn3.ReadOnly = true;
-            this.dataGridViewTextBoxColumn3.Width = 75;
-            // 
-            // dataGridViewTextBoxColumn4
-            // 
-            this.dataGridViewTextBoxColumn4.DataPropertyName = "Ability";
-            this.dataGridViewTextBoxColumn4.HeaderText = "Ability";
-            this.dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
-            this.dataGridViewTextBoxColumn4.ReadOnly = true;
-            this.dataGridViewTextBoxColumn4.Width = 45;
-            // 
-            // dataGridViewTextBoxColumn5
-            // 
-            this.dataGridViewTextBoxColumn5.DataPropertyName = "HP";
-            this.dataGridViewTextBoxColumn5.HeaderText = "HP";
-            this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
-            this.dataGridViewTextBoxColumn5.ReadOnly = true;
-            this.dataGridViewTextBoxColumn5.Width = 35;
-            // 
-            // dataGridViewTextBoxColumn6
-            // 
-            this.dataGridViewTextBoxColumn6.DataPropertyName = "Atk";
-            this.dataGridViewTextBoxColumn6.HeaderText = "Atk";
-            this.dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
-            this.dataGridViewTextBoxColumn6.ReadOnly = true;
-            this.dataGridViewTextBoxColumn6.Width = 35;
-            // 
-            // dataGridViewTextBoxColumn7
-            // 
-            this.dataGridViewTextBoxColumn7.DataPropertyName = "Def";
-            this.dataGridViewTextBoxColumn7.HeaderText = "Def";
-            this.dataGridViewTextBoxColumn7.Name = "dataGridViewTextBoxColumn7";
-            this.dataGridViewTextBoxColumn7.ReadOnly = true;
-            this.dataGridViewTextBoxColumn7.Width = 35;
-            // 
-            // dataGridViewTextBoxColumn8
-            // 
-            this.dataGridViewTextBoxColumn8.DataPropertyName = "SpA";
-            this.dataGridViewTextBoxColumn8.HeaderText = "SpA";
-            this.dataGridViewTextBoxColumn8.Name = "dataGridViewTextBoxColumn8";
-            this.dataGridViewTextBoxColumn8.ReadOnly = true;
-            this.dataGridViewTextBoxColumn8.Width = 35;
-            // 
-            // dataGridViewTextBoxColumn9
-            // 
-            this.dataGridViewTextBoxColumn9.DataPropertyName = "SpD";
-            this.dataGridViewTextBoxColumn9.HeaderText = "SpD";
-            this.dataGridViewTextBoxColumn9.Name = "dataGridViewTextBoxColumn9";
-            this.dataGridViewTextBoxColumn9.ReadOnly = true;
-            this.dataGridViewTextBoxColumn9.Width = 35;
-            // 
-            // dataGridViewTextBoxColumn10
-            // 
-            this.dataGridViewTextBoxColumn10.DataPropertyName = "Spe";
-            this.dataGridViewTextBoxColumn10.HeaderText = "Spe";
-            this.dataGridViewTextBoxColumn10.Name = "dataGridViewTextBoxColumn10";
-            this.dataGridViewTextBoxColumn10.ReadOnly = true;
-            this.dataGridViewTextBoxColumn10.Width = 35;
-            // 
-            // dataGridViewTextBoxColumn11
-            // 
-            this.dataGridViewTextBoxColumn11.DataPropertyName = "Hidden";
-            this.dataGridViewTextBoxColumn11.HeaderText = "Hidden";
-            this.dataGridViewTextBoxColumn11.Name = "dataGridViewTextBoxColumn11";
-            this.dataGridViewTextBoxColumn11.ReadOnly = true;
-            this.dataGridViewTextBoxColumn11.Width = 50;
-            // 
-            // HiddenPowerPower
-            // 
-            this.HiddenPowerPower.DataPropertyName = "Power";
-            this.HiddenPowerPower.HeaderText = "Power";
-            this.HiddenPowerPower.Name = "HiddenPowerPower";
-            this.HiddenPowerPower.ReadOnly = true;
-            this.HiddenPowerPower.Width = 50;
-            // 
-            // f125
-            // 
-            this.f125.DataPropertyName = "Eighth";
-            this.f125.HeaderText = "12.5%F";
-            this.f125.Name = "f125";
-            this.f125.ReadOnly = true;
-            this.f125.Width = 50;
-            // 
-            // f25
-            // 
-            this.f25.DataPropertyName = "Quarter";
-            this.f25.HeaderText = "25% F";
-            this.f25.Name = "f25";
-            this.f25.ReadOnly = true;
-            this.f25.Width = 50;
-            // 
-            // f50
-            // 
-            this.f50.DataPropertyName = "Half";
-            this.f50.HeaderText = "50% F";
-            this.f50.Name = "f50";
-            this.f50.ReadOnly = true;
-            this.f50.Width = 50;
-            // 
-            // f75
-            // 
-            this.f75.DataPropertyName = "Three_Fourths";
-            this.f75.HeaderText = "75% F";
-            this.f75.Name = "f75";
-            this.f75.ReadOnly = true;
-            this.f75.Width = 50;
-            // 
-            // Reason
-            // 
-            this.Reason.DataPropertyName = "Reason";
-            this.Reason.HeaderText = "Reason";
-            this.Reason.Name = "Reason";
-            this.Reason.ReadOnly = true;
             // 
             // spe30Above
             // 
@@ -1427,11 +1243,8 @@
             this.tabPage1.Controls.Add(this.galesCheck);
             this.tabPage1.Controls.Add(this.hpValue);
             this.tabPage1.Controls.Add(this.hpLogic);
-            this.tabPage1.Controls.Add(this.anyShadowMethod);
             this.tabPage1.Controls.Add(this.anyHiddenPower);
-            this.tabPage1.Controls.Add(this.comboBoxShadowMethod);
             this.tabPage1.Controls.Add(this.anyAbility);
-            this.tabPage1.Controls.Add(this.shadowMethodLabel);
             this.tabPage1.Controls.Add(this.anyGender);
             this.tabPage1.Controls.Add(this.anyNature);
             this.tabPage1.Controls.Add(this.comboBoxNature);
@@ -1610,8 +1423,8 @@
             // dataGridViewTextBoxColumn13
             // 
             this.dataGridViewTextBoxColumn13.DataPropertyName = "PID";
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Consolas", 8.75F);
-            this.dataGridViewTextBoxColumn13.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Consolas", 8.75F);
+            this.dataGridViewTextBoxColumn13.DefaultCellStyle = dataGridViewCellStyle2;
             this.dataGridViewTextBoxColumn13.HeaderText = "PID";
             this.dataGridViewTextBoxColumn13.Name = "dataGridViewTextBoxColumn13";
             this.dataGridViewTextBoxColumn13.ReadOnly = true;
@@ -2611,6 +2424,152 @@
             this.spaMaxShadow.Text = "==31";
             this.spaMaxShadow.Click += new System.EventHandler(this.spaMaxShadow_Click);
             // 
+            // dataGridViewTextBoxColumn0
+            // 
+            this.dataGridViewTextBoxColumn0.DataPropertyName = "Seed";
+            this.dataGridViewTextBoxColumn0.HeaderText = "Seed";
+            this.dataGridViewTextBoxColumn0.Name = "dataGridViewTextBoxColumn0";
+            this.dataGridViewTextBoxColumn0.ReadOnly = true;
+            this.dataGridViewTextBoxColumn0.Width = 75;
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.DataPropertyName = "PID";
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Consolas", 8.75F);
+            this.dataGridViewTextBoxColumn1.DefaultCellStyle = dataGridViewCellStyle1;
+            this.dataGridViewTextBoxColumn1.HeaderText = "PID";
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            this.dataGridViewTextBoxColumn1.Width = 75;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            this.dataGridViewTextBoxColumn2.DataPropertyName = "Shiny";
+            this.dataGridViewTextBoxColumn2.HeaderText = "!!!";
+            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            this.dataGridViewTextBoxColumn2.ReadOnly = true;
+            this.dataGridViewTextBoxColumn2.Width = 25;
+            // 
+            // dataGridViewTextBoxColumn3
+            // 
+            this.dataGridViewTextBoxColumn3.DataPropertyName = "Nature";
+            this.dataGridViewTextBoxColumn3.HeaderText = "Nature";
+            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            this.dataGridViewTextBoxColumn3.ReadOnly = true;
+            this.dataGridViewTextBoxColumn3.Width = 75;
+            // 
+            // dataGridViewTextBoxColumn4
+            // 
+            this.dataGridViewTextBoxColumn4.DataPropertyName = "Ability";
+            this.dataGridViewTextBoxColumn4.HeaderText = "Ability";
+            this.dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            this.dataGridViewTextBoxColumn4.ReadOnly = true;
+            this.dataGridViewTextBoxColumn4.Width = 45;
+            // 
+            // dataGridViewTextBoxColumn5
+            // 
+            this.dataGridViewTextBoxColumn5.DataPropertyName = "HP";
+            this.dataGridViewTextBoxColumn5.HeaderText = "HP";
+            this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+            this.dataGridViewTextBoxColumn5.ReadOnly = true;
+            this.dataGridViewTextBoxColumn5.Width = 35;
+            // 
+            // dataGridViewTextBoxColumn6
+            // 
+            this.dataGridViewTextBoxColumn6.DataPropertyName = "Atk";
+            this.dataGridViewTextBoxColumn6.HeaderText = "Atk";
+            this.dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
+            this.dataGridViewTextBoxColumn6.ReadOnly = true;
+            this.dataGridViewTextBoxColumn6.Width = 35;
+            // 
+            // dataGridViewTextBoxColumn7
+            // 
+            this.dataGridViewTextBoxColumn7.DataPropertyName = "Def";
+            this.dataGridViewTextBoxColumn7.HeaderText = "Def";
+            this.dataGridViewTextBoxColumn7.Name = "dataGridViewTextBoxColumn7";
+            this.dataGridViewTextBoxColumn7.ReadOnly = true;
+            this.dataGridViewTextBoxColumn7.Width = 35;
+            // 
+            // dataGridViewTextBoxColumn8
+            // 
+            this.dataGridViewTextBoxColumn8.DataPropertyName = "SpA";
+            this.dataGridViewTextBoxColumn8.HeaderText = "SpA";
+            this.dataGridViewTextBoxColumn8.Name = "dataGridViewTextBoxColumn8";
+            this.dataGridViewTextBoxColumn8.ReadOnly = true;
+            this.dataGridViewTextBoxColumn8.Width = 35;
+            // 
+            // dataGridViewTextBoxColumn9
+            // 
+            this.dataGridViewTextBoxColumn9.DataPropertyName = "SpD";
+            this.dataGridViewTextBoxColumn9.HeaderText = "SpD";
+            this.dataGridViewTextBoxColumn9.Name = "dataGridViewTextBoxColumn9";
+            this.dataGridViewTextBoxColumn9.ReadOnly = true;
+            this.dataGridViewTextBoxColumn9.Width = 35;
+            // 
+            // dataGridViewTextBoxColumn10
+            // 
+            this.dataGridViewTextBoxColumn10.DataPropertyName = "Spe";
+            this.dataGridViewTextBoxColumn10.HeaderText = "Spe";
+            this.dataGridViewTextBoxColumn10.Name = "dataGridViewTextBoxColumn10";
+            this.dataGridViewTextBoxColumn10.ReadOnly = true;
+            this.dataGridViewTextBoxColumn10.Width = 35;
+            // 
+            // dataGridViewTextBoxColumn11
+            // 
+            this.dataGridViewTextBoxColumn11.DataPropertyName = "Hidden";
+            this.dataGridViewTextBoxColumn11.HeaderText = "Hidden";
+            this.dataGridViewTextBoxColumn11.Name = "dataGridViewTextBoxColumn11";
+            this.dataGridViewTextBoxColumn11.ReadOnly = true;
+            this.dataGridViewTextBoxColumn11.Width = 50;
+            // 
+            // HiddenPowerPower
+            // 
+            this.HiddenPowerPower.DataPropertyName = "Power";
+            this.HiddenPowerPower.HeaderText = "Power";
+            this.HiddenPowerPower.Name = "HiddenPowerPower";
+            this.HiddenPowerPower.ReadOnly = true;
+            this.HiddenPowerPower.Width = 50;
+            // 
+            // f125
+            // 
+            this.f125.DataPropertyName = "Eighth";
+            this.f125.HeaderText = "12.5%F";
+            this.f125.Name = "f125";
+            this.f125.ReadOnly = true;
+            this.f125.Width = 50;
+            // 
+            // f25
+            // 
+            this.f25.DataPropertyName = "Quarter";
+            this.f25.HeaderText = "25% F";
+            this.f25.Name = "f25";
+            this.f25.ReadOnly = true;
+            this.f25.Width = 50;
+            // 
+            // f50
+            // 
+            this.f50.DataPropertyName = "Half";
+            this.f50.HeaderText = "50% F";
+            this.f50.Name = "f50";
+            this.f50.ReadOnly = true;
+            this.f50.Width = 50;
+            // 
+            // f75
+            // 
+            this.f75.DataPropertyName = "Three_Fourths";
+            this.f75.HeaderText = "75% F";
+            this.f75.Name = "f75";
+            this.f75.ReadOnly = true;
+            this.f75.Width = 50;
+            // 
+            // Reason
+            // 
+            this.Reason.DataPropertyName = "Reason";
+            this.Reason.HeaderText = "Reason";
+            this.Reason.Name = "Reason";
+            this.Reason.ReadOnly = true;
+            this.Reason.Width = 125;
+            // 
             // GameCube
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -2621,6 +2580,7 @@
             this.MinimumSize = new System.Drawing.Size(1160, 661);
             this.Name = "GameCube";
             this.Text = "GameCube RNG";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.GameCube_FormClosing);
             this.Load += new System.EventHandler(this.GameCube_Load);
             this.contextMenuStripGrid.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewResult)).EndInit();
@@ -2691,29 +2651,8 @@
         private GlassButton spe31Quick;
         private System.Windows.Forms.ComboBox speLogic;
         private DoubleBufferedDataGridView dataGridViewResult;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn0;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn7;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn8;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn9;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn10;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn11;
-        private System.Windows.Forms.DataGridViewTextBoxColumn HiddenPowerPower;
-        private System.Windows.Forms.DataGridViewTextBoxColumn f125;
-        private System.Windows.Forms.DataGridViewTextBoxColumn f25;
-        private System.Windows.Forms.DataGridViewTextBoxColumn f50;
-        private System.Windows.Forms.DataGridViewTextBoxColumn f75;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Reason;
         private Controls.CheckBoxComboBox comboBoxNature;
         private Controls.CheckBoxComboBox comboBoxHiddenPower;
-        private System.Windows.Forms.Label shadowMethodLabel;
-        private Controls.CheckBoxComboBox comboBoxShadowMethod;
-        private GlassButton anyShadowMethod;
         private Controls.MaskedTextBox2 hpValue;
         private Controls.MaskedTextBox2 atkValue;
         private Controls.MaskedTextBox2 defValue;
@@ -2815,6 +2754,24 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn26;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn27;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn28;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn0;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn7;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn8;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn9;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn10;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn11;
+        private System.Windows.Forms.DataGridViewTextBoxColumn HiddenPowerPower;
+        private System.Windows.Forms.DataGridViewTextBoxColumn f125;
+        private System.Windows.Forms.DataGridViewTextBoxColumn f25;
+        private System.Windows.Forms.DataGridViewTextBoxColumn f50;
+        private System.Windows.Forms.DataGridViewTextBoxColumn f75;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Reason;
     }
 }
 

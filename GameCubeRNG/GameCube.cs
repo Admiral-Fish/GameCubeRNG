@@ -15,27 +15,25 @@ namespace GameCubeRNG
         private readonly String[] Natures = { "Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky" };
         private readonly String[] hiddenPowers = { "Fighting", "Flying", "Poison", "Ground", "Rock", "Bug", "Ghost", "Steel", "Fire", "Water", "Grass", "Electric", "Psychic", "Ice", "Dragon", "Dark" };
         private Thread[] searchThread;
-        private bool refresh;
-        private ThreadDelegate gridUpdate;
-        private BindingSource binding = new BindingSource();
+        private BindingSource binding, bindingShadow;
         private List<DisplayList> displayList;
         private List<ShadowDisplay> shadowDisplay;
-        private bool isSearching = false;
-        private List<uint> slist = new List<uint>();
-        private List<uint> rlist = new List<uint>();
-        private uint shinyval;
+        private bool isSearching, galesFlag;
+        private uint searchNumber, shadow, genderFilter, abilityFilter;
         private NatureLock natureLock;
-        private uint searchNumber;
-        private uint shadow;
-        private static List<uint> natureList;
-        private static List<uint> hiddenPowerList;
-        private static bool galesFlag = false;
-        private static List<uint> seedList;
+        private List<uint> natureList, seedList, hiddenPowerList;
+        private uint[] ivsLower, ivsUpper, shinyval;
+        private int natureLockIndex, cores;
 
         public GameCube()
         {
             InitializeComponent();
             Reason.Visible = false;
+            displayList = new List<DisplayList>();
+            shadowDisplay = new List<ShadowDisplay>();
+            binding = new BindingSource { DataSource = displayList };
+            bindingShadow = new BindingSource { DataSource = shadowDisplay };
+            seedList = new List<uint>();
             abilityType.SelectedIndex = 0;
             genderType.SelectedIndex = 0;
             searchMethod.SelectedIndex = 0;
@@ -58,6 +56,12 @@ namespace GameCubeRNG
             speLogicShadow.SelectedIndex = 0;
             dataGridViewResult.DataSource = binding;
             dataGridViewResult.AutoGenerateColumns = false;
+            dataGridShadow.DataSource = bindingShadow;
+            dataGridShadow.AutoGenerateColumns = false;
+            shinyval = new uint[8];
+            cores = Environment.ProcessorCount;
+            while (cores != 1 && cores != 2 && cores != 4 && cores != 8)
+                cores--;
         }
 
         private void GameCube_Load(object sender, EventArgs e)
@@ -66,21 +70,35 @@ namespace GameCubeRNG
             comboBoxHiddenPower.Items.AddRange(addHP());
             checkBoxNatureShadow.Items.AddRange(Nature.NatureDropDownCollectionSearchNatures());
             checkBoxHPShadow.Items.AddRange(addHP());
-            comboBoxShadowMethod.Items.AddRange(addShadowMethod());
             setComboBox();
             wshMkr.Visible = true;
-            shadowMethodLabel.Visible = false;
-            comboBoxShadowMethod.Visible = false;
-            anyShadowMethod.Visible = false;
             shadowPokemon.Visible = false;
             galesCheck.Visible = false;
+        }
+
+        private void GameCube_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = true;
+            if (searchThread != null)
+            {
+                for (int x = 0; x < searchThread.Length; x++)
+                    searchThread[x].Abort();
+                status.Text = "Cancelled. - Awaiting Command";
+            }
+            Hide();
         }
 
         #region Spread Searcher
         #region Start search
         private void search_Click(object sender, EventArgs e)
         {
-            getIVs(out uint[] ivsLower, out uint[] ivsUpper);
+            if (isSearching)
+            {
+                status.Text = "Previous search is still running";
+                return;
+            }
+
+            getIVs(out ivsLower, out ivsUpper);
             galesFlag = false;
 
             if (ivsLower[0] > ivsUpper[0])
@@ -97,14 +115,6 @@ namespace GameCubeRNG
                 MessageBox.Show("Spe: Lower limit > Upper limit");
             else
             {
-                dataGridViewResult.Rows.Clear();
-
-                if (isSearching)
-                {
-                    status.Text = "Previous search is still running";
-                    return;
-                }
-
                 natureList = null;
                 if (comboBoxNature.Text != "Any" && comboBoxNature.CheckBoxItems.Count > 0)
                     natureList = (from t in comboBoxNature.CheckBoxItems where t.Checked select (uint)((Nature)t.ComboBoxItem).Number).ToList();
@@ -119,64 +129,62 @@ namespace GameCubeRNG
                 if (temp.Count != 0)
                     hiddenPowerList = temp;
 
-                displayList = new List<DisplayList>();
-                binding = new BindingSource { DataSource = displayList };
-                dataGridViewResult.DataSource = binding;
+                abilityFilter = (uint)abilityType.SelectedIndex;
+                genderFilter = (uint)genderType.SelectedIndex;
+
+                displayList.Clear();
+                seedList.Clear();
+                binding.ResetBindings(false);
                 status.Text = "Searching";
-                slist.Clear();
-                rlist.Clear();
+                isSearching = true;
                 try
                 {
-                    shinyval = (uint.Parse(id.Text) ^ uint.Parse(sid.Text)) >> 3;
+                    shinyval[0] = (uint.Parse(id.Text) ^ uint.Parse(sid.Text)) >> 3;
                 }
                 catch
                 {
-                    shinyval = 0;
+                    shinyval[0] = 0;
                 }
-                searchNumber = getSearchMethod();
+                searchNumber = (uint)searchMethod.SelectedIndex;
 
-                if (galesCheck.Checked)
-                    Reason.Visible = true;
-                else
-                    Reason.Visible = false;
+                dataGridViewResult.Columns[17].Visible = galesCheck.Checked && searchMethod.SelectedIndex == 1;
 
-                getSearch(ivsLower, ivsUpper);
+                getSearch();
             }
         }
 
-        private void getSearch(uint[] ivsLower, uint[] ivsUpper)
+        private void getSearch()
         {
             if (searchNumber == 0)
             {
                 if (wshMkr.Checked)
                 {
                     searchThread = new Thread[1];
-                    searchThread[0] = new Thread(() => generateWishmkr(ivsLower, ivsUpper));
+                    searchThread[0] = new Thread(() => generateWishmkr());
                     searchThread[0].Start();
-                    var update = new Thread(updateGUI);
-                    update.Start();
                 }
                 else
-                    getRMethod(ivsLower, ivsUpper);
+                    getRMethod();
             }
             else if (searchNumber == 1)
             {
-                if (galesCheck.Checked == true)
-                    getGalesMethod(ivsLower, ivsUpper);
+                if (galesCheck.Checked)
+                    getGalesMethod();
                 else
-                    getMethod(ivsLower, ivsUpper);
+                    getColoMethod();
             }
             else
-                getChannelMethod(ivsLower, ivsUpper);
+                getChannelMethod();
         }
         #endregion
 
         #region Gales Search
-        private void getGalesMethod(uint[] ivsLower, uint[] ivsUpper)
+        private void getGalesMethod()
         {
-            int natureLockIndex = getNatureLock();
+            natureLockIndex = shadowPokemon.SelectedIndex;
             natureLock = new NatureLock(natureLockIndex);
-            shadow = natureLock.getType();
+            shadow = natureLock.getType(natureLockIndex);
+            galesFlag = natureLockIndex != 41;
 
             uint method = 1;
 
@@ -186,180 +194,314 @@ namespace GameCubeRNG
                 method *= temp;
             }
 
-            if (method > 16384)
+            switch (cores)
             {
-                searchThread = new Thread[1];
-                searchThread[0] = new Thread(() => generateGales(ivsLower, ivsUpper));
-                searchThread[0].Start();
-                var update = new Thread(updateGUI);
-                update.Start();
-            }
-            else
-            {
-                searchThread = new Thread[1];
-                searchThread[0] = new Thread(() => generateGales(ivsLower, ivsUpper));
-                searchThread[0].Start();
-                var update = new Thread(updateGUI);
-                update.Start();
+                case 1:
+                    if (method > 162268)
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateGales2(0, 64));
+                        searchThread[0].Start();
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateGales());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 2:
+                    if (method > 83720)
+                    {
+                        searchThread = new Thread[2];
+                        for (int i = 0; i < 2; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateGales2((uint)(i * 0x40000000), 32));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateGales());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 4:
+                    if (method > 45918)
+                    {
+                        searchThread = new Thread[4];
+                        for (int i = 0; i < 4; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateGales2((uint)(i * 0x20000000), 16));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateGales());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 8:
+                    if (method > 34970)
+                    {
+                        searchThread = new Thread[8];
+                        for (int i = 0; i < 8; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateGales2((uint)(i * 0x10000000), 8));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateGales());
+                        searchThread[0].Start();
+                    }
+                    break;
             }
 
         }
 
         #region First search method
-        private void generateGales(uint[] ivsLower, uint[] ivsUpper)
+        private void generateGales()
         {
-            isSearching = true;
-            uint ability = getAbility();
-            uint gender = getGender();
-
             for (uint a = ivsLower[0]; a <= ivsUpper[0]; a++)
                 for (uint b = ivsLower[1]; b <= ivsUpper[1]; b++)
                     for (uint c = ivsLower[2]; c <= ivsUpper[2]; c++)
                         for (uint d = ivsLower[3]; d <= ivsUpper[3]; d++)
+                        {
+                            Invoke(new Action(() => { binding.ResetBindings(false); }));
                             for (uint e = ivsLower[4]; e <= ivsUpper[4]; e++)
-                            {
-                                refresh = true;
                                 for (uint f = ivsLower[5]; f <= ivsUpper[5]; f++)
-                                    checkSeedGales(a, b, c, d, e, f, ability, gender);
-                            }
+                                    checkSeedGales(a, b, c, d, e, f);
+                        }
             isSearching = false;
+            Invoke(new Action(() => { binding.ResetBindings(false); }));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
         }
 
-        private void checkSeedGales(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint ability, uint gender)
+        private void checkSeedGales(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
             uint x8 = hp | (atk << 5) | (def << 10);
-            uint x8_2 = x8 ^ 0x8000;
             uint ex8 = spe | (spa << 5) | (spd << 10);
             uint ex8_2 = ex8 ^ 0x8000;
             uint ivs_1b = x8 << 16;
+            uint ivs_2, seedb, pid1, pid2, pid, nature, galesSeed, xorSeed, xorPID, xorNature, cnt;
+            bool pass, xorPass;
 
-            for (uint cnt = 0; cnt <= 0xFFFF; cnt++)
+            switch (shadow)
             {
-                uint seedb = ivs_1b | cnt;
-                uint ivs_2 = forwardXD(seedb) >> 16;
-                if (ivs_2 == ex8 || ivs_2 == ex8_2)
-                {
-                    uint pid1 = forwardXD(forwardXD(forwardXD(seedb)));
-                    uint pid2 = forwardXD(pid1);
-                    uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                    uint nature = pid - 25 * (pid / 25);
-                    uint galesSeed = reverseXD(seedb);
-                    bool pass = (natureList == null || natureList.Contains(nature)) ? true : false;
-
-                    uint xorSeed = galesSeed ^ 0x80000000;
-                    uint xorPID = pid ^= 0x80008000;
-                    uint xorNature = xorPID - 25 * (xorPID / 25);
-                    bool xorPass = (natureList == null || natureList.Contains(xorNature)) ? true : false;
-
-                    switch (shadow)
+                //No NL
+                case 0:
+                    for (cnt = 0; cnt <= 0xFFFF; cnt++)
                     {
-                        //No NL
-                        case 0:
-                            if (pass)
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, galesSeed, 0);
+                        seedb = ivs_1b | cnt;
+                        ivs_2 = forwardXD(seedb) >> 16;
+                        if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                        {
+                            pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                            pid2 = forwardXD(pid1);
+                            pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                            nature = pid % 25;
+                            galesSeed = reverseXD(seedb);
+                            pass = (natureList == null || natureList.Contains(nature));
 
+                            xorSeed = galesSeed ^ 0x80000000;
+                            xorPID = pid ^ 0x80008000;
+                            xorNature = xorPID % 25;
+                            xorPass = (natureList == null || natureList.Contains(xorNature));
+
+                            if (pass)
+                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 0);
                             if (xorPass)
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, xorPID, xorNature, xorSeed, 0);
-                            break;
-                        //First shadow
-                        case 1:
-                            if (pass && natureLock.method1FirstShadow(galesSeed))
-                            {
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, galesSeed, 0);
-                            }
-                            else if (xorPass && natureLock.method1FirstShadow(xorSeed))
-                            {
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, xorPID, xorNature, xorSeed, 0);
-                            }
-                            break;
-                        //Second shadow
-                        case 6:
-                            if (pass && natureLock.method1SecondShadowSet(galesSeed))
-                            {
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, galesSeed, 1);
-                            }
-                            else if (xorPass && natureLock.method1SecondShadowSet(xorSeed))
-                            {
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, xorPID, xorNature, xorSeed, 1);
-                            }
-                            else if (pass && natureLock.method1SecondShadowUnset(galesSeed))
-                            {
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, galesSeed, 2);
-                            }
-                            else if (xorPass && natureLock.method1SecondShadowUnset(xorSeed))
-                            {
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, xorPID, xorNature, xorSeed, 2);
-                            }
-                            else if (pass && natureLock.method1SecondShadowShinySkip(galesSeed))
-                            {
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, galesSeed, 3);
-                            }
-                            else if (xorPass && natureLock.method1SecondShadowShinySkip(xorSeed))
-                            {
-                                filterSeedGales(hp, atk, def, spa, spd, spe, ability, gender, xorPID, xorNature, xorSeed, 3);
-                            }
-                            break;
+                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
+                        }
                     }
-                }
+                    break;
+                //First Shadow
+                case 1:
+                    for (cnt = 0; cnt <= 0xFFFF; cnt++)
+                    {
+                        seedb = ivs_1b | cnt;
+                        ivs_2 = forwardXD(seedb) >> 16;
+                        if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                        {
+                            pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                            pid2 = forwardXD(pid1);
+                            pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                            nature = pid % 25;
+                            galesSeed = reverseXD(seedb);
+                            pass = (natureList == null || natureList.Contains(nature));
+
+                            xorSeed = galesSeed ^ 0x80000000;
+                            xorPID = pid ^ 0x80008000;
+                            xorNature = xorPID % 25;
+                            xorPass = (natureList == null || natureList.Contains(xorNature));
+
+                            if (pass && natureLock.method1FirstShadow(galesSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 0);
+                            else if (xorPass && natureLock.method1FirstShadow(xorSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
+                        }
+                    }
+                    break;
+                //First shadow 1 NL
+                case 2:
+                    for (cnt = 0; cnt <= 0xFFFF; cnt++)
+                    {
+                        seedb = ivs_1b | cnt;
+                        ivs_2 = forwardXD(seedb) >> 16;
+                        if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                        {
+                            pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                            pid2 = forwardXD(pid1);
+                            pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                            nature = pid % 25;
+                            galesSeed = reverseXD(seedb);
+                            pass = (natureList == null || natureList.Contains(nature));
+
+                            xorSeed = galesSeed ^ 0x80000000;
+                            xorPID = pid ^ 0x80008000;
+                            xorNature = xorPID % 25;
+                            xorPass = (natureList == null || natureList.Contains(xorNature));
+
+                            if (pass && natureLock.method1SingleNL(galesSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 0);
+                            else if (xorPass && natureLock.method1SingleNL(xorSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
+                        }
+                    }
+                    break;
+                //Salamence
+                case 3:
+                    for (cnt = 0; cnt <= 0xFFFF; cnt++)
+                    {
+                        seedb = ivs_1b | cnt;
+                        ivs_2 = forwardXD(seedb) >> 16;
+                        if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                        {
+                            pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                            pid2 = forwardXD(pid1);
+                            pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                            nature = pid % 25;
+                            galesSeed = reverseXD(seedb);
+                            pass = (natureList == null || natureList.Contains(nature));
+
+                            xorSeed = galesSeed ^ 0x80000000;
+                            xorPID = pid ^ 0x80008000;
+                            xorNature = xorPID % 25;
+                            xorPass = (natureList == null || natureList.Contains(xorNature));
+
+                            if (pass && natureLock.salamenceSet(galesSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 1);
+                            else if (xorPass && natureLock.salamenceSet(xorSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 1);
+                            else if (pass && natureLock.salamenceUnset(galesSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 2);
+                            else if (xorPass && natureLock.salamenceUnset(xorSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 2);
+                            else if (pass && natureLock.salamenceShinySkip(galesSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 3);
+                            else if (xorPass && natureLock.salamenceShinySkip(xorSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 3);
+                        }
+                    }
+                    break;
+                //Second Shadow
+                case 6:
+                    for (cnt = 0; cnt <= 0xFFFF; cnt++)
+                    {
+                        seedb = ivs_1b | cnt;
+                        ivs_2 = forwardXD(seedb) >> 16;
+                        if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                        {
+                            pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                            pid2 = forwardXD(pid1);
+                            pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                            nature = pid % 25;
+                            galesSeed = reverseXD(seedb);
+                            pass = (natureList == null || natureList.Contains(nature));
+
+                            xorSeed = galesSeed ^ 0x80000000;
+                            xorPID = pid ^ 0x80008000;
+                            xorNature = xorPID % 25;
+                            xorPass = (natureList == null || natureList.Contains(xorNature));
+
+                            if (pass && natureLock.method1SecondShadowSet(galesSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 1);
+                            else if (xorPass && natureLock.method1SecondShadowSet(xorSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 1);
+                            else if (pass && natureLock.method1SecondShadowUnset(galesSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 2);
+                            else if (xorPass && natureLock.method1SecondShadowUnset(xorSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 2);
+                            else if (pass && natureLock.method1SecondShadowShinySkip(galesSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 3);
+                            else if (xorPass && natureLock.method1SecondShadowShinySkip(xorSeed))
+                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 3);
+                        }
+                    }
+                    break;
             }
         }
 
-        private void filterSeedGales(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint ability, uint gender, uint pid, uint nature, uint seed, int num)
+        private void filterSeedGales(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint pid, uint nature, uint seed, int num)
         {
             String shiny = "";
-            if (getNatureLock() == 41)
-                if (Shiny_Check.Checked)
-                {
-                    if (!isShiny(pid))
-                        return;
-                    shiny = "!!!";
-                }
+            if (!galesFlag && Shiny_Check.Checked)
+            {
+                if (!isShiny(pid, 0))
+                    return;
+                shiny = "!!!";
+            }
 
             uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
-            if (hiddenPowerList != null)
-                if (!hiddenPowerList.Contains(actualHP))
-                    return;
+            if (hiddenPowerList != null && !hiddenPowerList.Contains(actualHP))
+                return;
 
-            if (ability != 0)
-            {
-                if ((pid & 1) != (ability - 1))
-                    return;
-            }
-            ability = pid & 1;
+            uint ability = pid & 1;
+            if (abilityFilter != 0 && (ability != (abilityFilter - 1)))
+                return;
 
-            switch (gender)
+            uint gender = pid & 255;
+            switch (genderFilter)
             {
                 case 1:
-                    if ((pid & 255) < 127)
+                    if (gender < 127)
                         return;
                     break;
                 case 2:
-                    if ((pid & 255) > 126)
+                    if (gender > 126)
                         return;
                     break;
                 case 3:
-                    if ((pid & 255) < 191)
+                    if (gender < 191)
                         return;
                     break;
                 case 4:
-                    if ((pid & 255) > 190)
+                    if (gender > 190)
                         return;
                     break;
                 case 5:
-                    if ((pid & 255) < 64)
+                    if (gender < 64)
                         return;
                     break;
                 case 6:
-                    if ((pid & 255) > 63)
+                    if (gender > 63)
                         return;
                     break;
                 case 7:
-                    if ((pid & 255) < 31)
+                    if (gender < 31)
                         return;
                     break;
                 case 8:
-                    if ((pid & 255) > 30)
+                    if (gender > 30)
                         return;
                     break;
             }
@@ -374,137 +516,299 @@ namespace GameCubeRNG
             else
             {
                 reason = "Shiny skip";
-                uint pid2 = forwardXD(forwardXD(seed));
-                uint pid1 = forwardXD(pid2);
-                int tsv = (int)((pid2 >> 16) ^ (pid1 >> 16)) >> 3;
-                reason = reason + " (TSV: " + tsv + ")";
+                var reverse = new XdRngR(seed);
+                bool shinyCheck = true;
+                reverse.GetNext32BitNumber();
+                uint tsv = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
+                uint tsvtemp = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
+                while (shinyCheck)
+                {
+                    if (tsv == tsvtemp)
+                    {
+                        tsv = tsvtemp;
+                        tsvtemp = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
+                    }
+                    else
+                        shinyCheck = false;
+                }
+                reason = reason + " (TSV: " + tsvtemp + ")";
             }
-            if (seedList != null)
-                seedList.Add(seed);
-            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, shiny, seed, reason);
+            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, shiny, seed, reason, 0);
         }
         #endregion
 
         #region Second search method
-        private void generateGales2(uint[] ivsLower, uint[] ivsUpper)
+        private void generateGales2(uint inseed, int num1)
         {
-            seedList = new List<uint>();
-            uint s = 0;
-            uint srange = 1048576;
-            isSearching = true;
+            var rng = new XdRng(inseed);
+            uint pid, iv1, iv2, nature, seed;
+            uint[] ivs;
+            var info = new NatureLock(natureLockIndex);
 
-            uint ability = getAbility();
-            uint gender = getGender();
-
-            for (uint z = 0; z < 32; z++)
+            switch (shadow)
             {
-                for (uint h = 0; h < 64; h++)
-                {
-                    populate(s, srange + 1500);
-                    for (uint n = 0; n < srange; n++)
+                //No nature lock
+                case 0:
+                    uint[] rand = new uint[6];
+                    rand[0] = inseed;
+
+                    for (int x = 1; x < 6; x++)
+                        rand[x] = rng.GetNext32BitNumber();
+
+                    int j = 5;
+
+                    for (uint z = 0; z < 32; z++)
                     {
-                        for (uint sisterSeed = 0; sisterSeed < 2; sisterSeed++)
+                        for (uint h = 0; h < num1; h++)
                         {
-                            uint seed = sisterSeed == 0 ? slist[(int)n] : slist[(int)n] ^ 0x80000000;
-                            /*if (natureLock[0] == 1)
+                            for (uint n = 0; n < 1048576; n++, rand[j] = rng.GetNext32BitNumber())
                             {
-                                int forward = method2SingleNL(seed, n, sisterSeed);
-                                uint tempSeed = sisterSeed == 0 ? slist[(int)(n + forward)] : slist[(int)(n + forward)] ^ 0x80000000;
-                                if (!seedList.Contains(tempSeed))
+                                if (++j > 5)
+                                    j = 0;
+                                ivs = createIVs(rand[j >= 5 ? j - 5 : j + 1] >> 16, rand[j >= 4 ? j - 4 : j + 2] >> 16);
+                                if (ivs != null)
                                 {
-                                    uint[] ivs = calcIVs(ivsLower, ivsUpper, (uint)(n + forward));
-                                    if (ivs != null)
+                                    pid = (rand[j >= 2 ? j - 2 : j + 4] & 0xFFFF0000) | (rand[j >= 1 ? j - 1 : j + 5] >> 16);
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                        filterSeedGales(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, rand[j], 0);
+
+                                    pid ^= 80008000;
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                        filterSeedGales(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, rand[j] ^ 0x80000000, 0);
+                                }
+                            }
+                            Invoke(new Action(() => { binding.ResetBindings(false); }));
+                        }
+                    }
+                    break;
+                //First Shadow
+                case 1:
+                case 2:
+                    info.rand.Add(inseed);
+                    for (uint x = 0; x < 10000; x++)
+                        info.rand.Add(rng.GetNext32BitNumber());
+
+                    for (uint z = 0; z < 32; z++)
+                    {
+                        for (uint h = 0; h < num1; h++)
+                        {
+                            for (uint n = 0; n < 1048576; n++, info.rand.RemoveAt(0), info.rand.Add(rng.GetNext32BitNumber()))
+                            {
+                                info.method2FirstShadow(false, out seed, out pid, out iv1, out iv2);
+                                if (!seedList.Contains(seed))
+                                {
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
                                     {
-                                        uint pid = pidChk((uint)(n + forward), sisterSeed);
-                                        uint nature = pid - 25 * (pid / 25);
-                                        if (natureList == null || natureList.Contains(nature))
-                                            filterSeedGales(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, pid, nature, tempSeed, 0);
+                                        ivs = createIVs(iv1, iv2);
+                                        if (ivs != null)
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 0);
+                                    }
+                                }
+
+                                info.method2FirstShadow(true, out seed, out pid, out iv1, out iv2);
+                                if (!seedList.Contains(seed))
+                                {
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                    {
+                                        ivs = createIVs(iv1, iv2);
+                                        if (ivs != null)
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 0);
                                     }
                                 }
                             }
-                            else
-                            {
-                                if (natureLock[1] == 1)
-                                {
-                                    int forward = method2MultiNL(seed, n, sisterSeed);
-                                    forward += 7;
-                                    uint tempSeed = sisterSeed == 0 ? slist[(int)(n + forward)] : slist[(int)(n + forward)] ^ 0x80000000;
-                                    if (!seedList.Contains(tempSeed))
-                                    {
-                                        uint[] ivs = calcIVs(ivsLower, ivsUpper, (uint)(n + forward));
-                                        if (ivs != null)
-                                        {
-                                            uint pid = pidChk((uint)(n + forward), sisterSeed);
-                                            uint nature = pid - 25 * (pid / 25);
-                                            if (natureList == null || natureList.Contains(nature))
-                                                filterSeedGales(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, pid, nature, tempSeed, 0);
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    int forward = 0; //method2MultiNL(seed, n, sisterSeed);
-                                    foreach (int secondShadowNum in secondShadow)
-                                    {
-                                        uint pid;
-                                        int shinySkipCount = 0;
-                                        if (secondShadowNum == 1)
-                                        {
-                                            forward += 5;
-                                            pid = pidChk((uint)(n + forward), sisterSeed);
-                                        }
-                                        else if (secondShadowNum == 2)
-                                        {
-                                            forward += 7;
-                                            pid = pidChk((uint)(n + forward), sisterSeed);
-                                        }
-                                        else
-                                        {
-                                            forward += 7;
-                                            pid = pidChk((uint)(n + forward), sisterSeed);
-                                            uint tsv = ((pid >> 16) ^ (pid & 0xFFFF)) >> 3;
-                                            bool shinySkipFlag = true;
-                                            while(shinySkipFlag)
-                                            {
-                                                shinySkipCount += 2;
-                                                pid = pidChk((uint)(n + forward + shinySkipCount), sisterSeed);
-                                                uint temptsv = ((pid >> 16) ^ (pid & 0xFFFF)) >> 3;
-                                                if (temptsv != tsv)
-                                                    shinySkipFlag = false;
-                                                else
-                                                    tsv = temptsv;
-                                            }
-                                        }
-                                        uint tempSeed = sisterSeed == 0 ? slist[(int)(n + forward)] : slist[(int)(n + forward)] ^ 0x80000000;
-                                        if (!seedList.Contains(tempSeed))
-                                        {
-                                            uint[] ivs = calcIVs(ivsLower, ivsUpper, (uint)(n + forward + shinySkipCount));
-                                            if (ivs != null)
-                                            {
-                                                uint nature = pid == 0 ? 0 : pid - 25 * (pid / 25);
-                                                if (natureList == null || natureList.Contains(nature))
-                                                    filterSeedGales(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, pid, nature, tempSeed, secondShadowNum);
-                                            }
-                                        }
-                                    }
-                                }
-                            }*/
+                            Invoke(new Action(() => { binding.ResetBindings(false); }));
                         }
                     }
-                    refresh = true;
-                    s = slist[(int)srange];
-                    slist.Clear();
-                    rlist.Clear();
-                }
+                    break;
+                //Second shadow
+                case 3:
+                case 6:
+                    info.rand.Add(inseed);
+                    for (uint x = 0; x < 2999; x++)
+                        info.rand.Add(rng.GetNext32BitNumber());
+
+                    for (uint z = 0; z < 32; z++)
+                    {
+                        for (uint h = 0; h < num1; h++)
+                        {
+                            for (uint n = 0; n < 1048576; n++, info.rand.RemoveAt(0), info.rand.Add(rng.GetNext32BitNumber()))
+                            {
+                                info.method2SecondShadowSet(false, out seed, out pid, out iv1, out iv2);
+                                if (!seedList.Contains(seed))
+                                {
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                    {
+                                        ivs = createIVs(iv1, iv2);
+                                        if (ivs != null)
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 1);
+                                    }
+                                }
+
+                                info.method2SecondShadowSet(true, out seed, out pid, out iv1, out iv2);
+                                if (!seedList.Contains(seed))
+                                {
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                    {
+                                        ivs = createIVs(iv1, iv2);
+                                        if (ivs != null)
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 1);
+                                    }
+                                }
+
+                                info.method2SecondShadowUnset(false, out seed, out pid, out iv1, out iv2);
+                                if (!seedList.Contains(seed))
+                                {
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                    {
+                                        ivs = createIVs(iv1, iv2);
+                                        if (ivs != null)
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 1);
+                                    }
+                                }
+
+                                info.method2SecondShadowUnset(true, out seed, out pid, out iv1, out iv2);
+                                if (!seedList.Contains(seed))
+                                {
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                    {
+                                        ivs = createIVs(iv1, iv2);
+                                        if (ivs != null)
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 1);
+                                    }
+                                }
+
+                                info.method2SecondShinySkip(false, out seed, out pid, out iv1, out iv2);
+                                if (!seedList.Contains(seed))
+                                {
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                    {
+                                        ivs = createIVs(iv1, iv2);
+                                        if (ivs != null)
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 1);
+                                    }
+                                }
+
+                                info.method2SecondShinySkip(true, out seed, out pid, out iv1, out iv2);
+                                if (!seedList.Contains(seed))
+                                {
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                    {
+                                        ivs = createIVs(iv1, iv2);
+                                        if (ivs != null)
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 1);
+                                    }
+                                }
+                            }
+                            Invoke(new Action(() => { binding.ResetBindings(false); }));
+                        }
+                    }
+                    break;
             }
             isSearching = false;
+            Invoke(new Action(() => { binding.ResetBindings(false); }));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
+        }
+
+        private void filterSeedGales2(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint pid, uint nature, uint seed, int num)
+        {
+            String shiny = "";
+            if (!galesFlag && Shiny_Check.Checked)
+            {
+                if (!isShiny(pid, 0))
+                    return;
+                shiny = "!!!";
+            }
+
+            uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
+            if (hiddenPowerList != null && !hiddenPowerList.Contains(actualHP))
+                return;
+
+            uint ability = pid & 1;
+            if (abilityFilter != 0 && (ability != (abilityFilter - 1)))
+                return;
+
+            uint gender = pid & 255;
+            switch (genderFilter)
+            {
+                case 1:
+                    if (gender < 127)
+                        return;
+                    break;
+                case 2:
+                    if (gender > 126)
+                        return;
+                    break;
+                case 3:
+                    if (gender < 191)
+                        return;
+                    break;
+                case 4:
+                    if (gender > 190)
+                        return;
+                    break;
+                case 5:
+                    if (gender < 64)
+                        return;
+                    break;
+                case 6:
+                    if (gender > 63)
+                        return;
+                    break;
+                case 7:
+                    if (gender < 31)
+                        return;
+                    break;
+                case 8:
+                    if (gender > 30)
+                        return;
+                    break;
+            }
+
+            String reason = "";
+            if (num == 0)
+                reason = "Pass NL";
+            else if (num == 1)
+                reason = "1st shadow set";
+            else if (num == 2)
+                reason = "1st shadow unset";
+            else
+            {
+                reason = "Shiny skip";
+                var reverse = new XdRngR(seed);
+                bool shinyCheck = true;
+                reverse.GetNext32BitNumber();
+                uint tsv = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
+                uint tsvtemp = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
+                while (shinyCheck)
+                {
+                    if (tsv == tsvtemp)
+                    {
+                        tsv = tsvtemp;
+                        tsvtemp = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
+                    }
+                    else
+                        shinyCheck = false;
+                }
+                reason = reason + " (TSV: " + tsvtemp + ")";
+            }
+            seedList.Add(seed);
+            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, shiny, seed, reason, 0);
         }
         #endregion
         #endregion
 
         #region Colo search
-        private void getMethod(uint[] ivsLower, uint[] ivsUpper)
+        private void getColoMethod()
         {
             uint method = 1;
 
@@ -514,51 +818,101 @@ namespace GameCubeRNG
                 method *= temp;
             }
 
-            if (method > 84095)
+            switch (cores)
             {
-                searchThread = new Thread[1];
-                searchThread[0] = new Thread(() => generate2(ivsLower, ivsUpper));
-                searchThread[0].Start();
-                var update = new Thread(updateGUI);
-                update.Start();
-            }
-            else
-            {
-                searchThread = new Thread[1];
-                searchThread[0] = new Thread(() => generate(ivsLower, ivsUpper));
-                searchThread[0].Start();
-                var update = new Thread(updateGUI);
-                update.Start();
+                case 1:
+                    if (method > 162268)
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateColo2(0, 64));
+                        searchThread[0].Start();
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateColo());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 2:
+                    if (method > 83720)
+                    {
+                        searchThread = new Thread[2];
+                        for (int i = 0; i < 2; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateColo2((uint)(i * 0x40000000), 32));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateColo());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 4:
+                    if (method > 45918)
+                    {
+                        searchThread = new Thread[4];
+                        for (int i = 0; i < 4; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateColo2((uint)(i * 0x20000000), 16));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateColo());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 8:
+                    if (method > 34970)
+                    {
+                        searchThread = new Thread[8];
+                        for (int i = 0; i < 8; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateColo2((uint)(i * 0x10000000), 8));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateColo());
+                        searchThread[0].Start();
+                    }
+                    break;
             }
         }
 
         #region First search method
-        private void generate(uint[] ivsLower, uint[] ivsUpper)
+        private void generateColo()
         {
-            isSearching = true;
-            uint ability = getAbility();
-            uint gender = getGender();
-
             for (uint a = ivsLower[0]; a <= ivsUpper[0]; a++)
                 for (uint b = ivsLower[1]; b <= ivsUpper[1]; b++)
                     for (uint c = ivsLower[2]; c <= ivsUpper[2]; c++)
                         for (uint d = ivsLower[3]; d <= ivsUpper[3]; d++)
+                        {
+                            Invoke(new Action(() => { binding.ResetBindings(false); }));
                             for (uint e = ivsLower[4]; e <= ivsUpper[4]; e++)
-                            {
-                                refresh = true;
                                 for (uint f = ivsLower[5]; f <= ivsUpper[5]; f++)
-                                    checkSeed(a, b, c, d, e, f, ability, gender);
-                            }
+                                    checkSeed(a, b, c, d, e, f);
+                        }
 
             isSearching = false;
+            Invoke(new Action(() => { binding.ResetBindings(false); }));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
         }
 
-        //Credit to RNG Reporter for this
-        private void checkSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint ability, uint gender)
+        private void checkSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
             uint x8 = hp + (atk << 5) + (def << 10);
-            uint x8_2 = x8 ^ 0x8000;
             uint ex8 = spe + (spa << 5) + (spd << 10);
             uint ex8_2 = ex8 ^ 0x8000;
             uint ivs_1b = x8 << 16;
@@ -572,201 +926,133 @@ namespace GameCubeRNG
                     uint pid1 = forwardXD(forwardXD(forwardXD(seedb)));
                     uint pid2 = forwardXD(pid1);
                     uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                    uint nature = pid - 25 * (pid / 25);
+                    uint nature = pid % 25;
+                    uint seed = reverseXD(seedb);
                     if (natureList == null || natureList.Contains(nature))
-                    {
-                        uint coloSeed = reverseXD(seedb);
-                        filterSeed(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed);
-                    }
+                        filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
 
                     pid ^= 0x80008000;
-                    nature = pid - 25 * (pid / 25);
+                    nature = pid % 25;
                     if (natureList == null || natureList.Contains(nature))
-                    {
-                        uint coloSeed = reverseXD(seedb) ^ 0x80000000;
-                        filterSeed(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, coloSeed);
-                    }
+                        filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
                 }
 
             }
         }
 
-        private void filterSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint ability, uint gender, uint pid, uint nature, uint seed)
+        private void filterSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint pid, uint nature, uint seed)
         {
             String shiny = "";
-            if (!galesFlag)
-                if (Shiny_Check.Checked == true)
-                {
-                    if (!isShiny(pid))
-                        return;
-                    shiny = "!!!";
-                }
+            if (Shiny_Check.Checked)
+            {
+                if (!isShiny(pid, 0))
+                    return;
+                shiny = "!!!";
+            }
 
             uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
-            if (hiddenPowerList != null)
-                if (!hiddenPowerList.Contains(actualHP))
-                    return;
+            if (hiddenPowerList != null && !hiddenPowerList.Contains(actualHP))
+                return;
 
-            if (ability != 0)
-                if ((pid & 1) != (ability - 1))
-                    return;
-            ability = pid & 1;
+            uint ability = pid & 1;
+            if (abilityFilter != 0 && (ability != (abilityFilter - 1)))
+                return;
 
-            switch (gender)
+            uint gender = pid & 255;
+            switch (genderFilter)
             {
                 case 1:
-                    if ((pid & 255) < 127)
+                    if (gender < 127)
                         return;
                     break;
                 case 2:
-                    if ((pid & 255) > 126)
+                    if (gender > 126)
                         return;
                     break;
                 case 3:
-                    if ((pid & 255) < 191)
+                    if (gender < 191)
                         return;
                     break;
                 case 4:
-                    if ((pid & 255) > 190)
+                    if (gender > 190)
                         return;
                     break;
                 case 5:
-                    if ((pid & 255) < 64)
+                    if (gender < 64)
                         return;
                     break;
                 case 6:
-                    if ((pid & 255) > 63)
+                    if (gender > 63)
                         return;
                     break;
                 case 7:
-                    if ((pid & 255) < 31)
+                    if (gender < 31)
                         return;
                     break;
                 case 8:
-                    if ((pid & 255) > 30)
+                    if (gender > 30)
                         return;
                     break;
             }
-
-            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, shiny, seed, "");
+            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, shiny, seed, "", 0);
         }
         #endregion
 
         #region Second search method
-        //Credits to Zari for this
-        private void generate2(uint[] ivsLower, uint[] ivsUpper)
+        private void generateColo2(uint seed, int num1)
         {
-            uint s = 0;
-            uint srange = 1048576;
-            isSearching = true;
+            uint[] seedShort = new uint[6];
+            uint[] seedLong = new uint[6];
+            seedShort[0] = seed >> 16;
+            seedLong[0] = seed;
+            var rng = new XdRng(seed);
 
-            uint ability = getAbility();
-            uint gender = getGender();
+            for (int i = 1; i < 6; i++)
+            {
+                seedShort[i] = rng.GetNext16BitNumber();
+                seedLong[i] = rng.Seed;
+            }
+
+            int j = 5;
+            uint pid, nature;
+            uint[] ivs;
 
             for (uint z = 0; z < 32; z++)
             {
-                for (uint h = 0; h < 64; h++)
+                for (uint h = 0; h < num1; h++)
                 {
-                    populate(s, srange);
-                    for (uint n = 0; n < srange; n++)
+                    for (uint n = 0; n < 1048576; n++, seedShort[j] = rng.GetNext16BitNumber(), seedLong[j] = rng.Seed)
                     {
-                        uint[] ivs = calcIVs(ivsLower, ivsUpper, n);
+                        if (++j > 5)
+                            j = 0;
+
+                        ivs = createIVs(seedShort[j >= 5 ? j - 5 : j + 1], seedShort[j >= 4 ? j - 4 : j + 2]);
                         if (ivs != null)
                         {
-                            uint pid = pidChk(n, 0);
-                            uint nature = pid - 25 * (pid / 25);
+                            pid = seedLong[j >= 2 ? j - 2 : j + 4] & 0xFFFF0000 | seedShort[j >= 1 ? j - 1 : j + 5];
+                            nature = pid % 25;
                             if (natureList == null || natureList.Contains(nature))
-                                filterSeed(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, pid, nature, slist[(int)n]);
+                                filterSeed(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seedLong[j]);
 
-                            pid = pidChk(n, 1);
-                            nature = pid - 25 * (pid / 25);
+                            pid ^= 0x80008000;
+                            nature = pid % 25;
                             if (natureList == null || natureList.Contains(nature))
-                                filterSeed(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, pid, nature, slist[(int)n] ^ 0x8000000);
+                                filterSeed(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seedLong[j] ^ 0x80000000);
                         }
                     }
-                    refresh = true;
-                    s = slist[(int)srange];
-                    slist.Clear();
-                    rlist.Clear();
+                    Invoke(new Action(() => { binding.ResetBindings(false); }));
                 }
             }
             isSearching = false;
+            Invoke(new Action(() => { binding.ResetBindings(false); }));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
-        }
-
-        private uint populateRNG(uint seed)
-        {
-            seed = forwardXD(seed);
-            slist.Add(seed);
-            rlist.Add((seed >> 16));
-            return seed;
-        }
-
-        private void populate(uint seed, uint srange)
-        {
-            uint s = seed;
-            for (uint x = 0; x < (srange + 12); x++)
-                s = populateRNG(s);
-        }
-
-        private uint[] calcIVs(uint[] ivsLower, uint[] ivsUpper, uint frame)
-        {
-            uint[] ivs;
-            uint iv1 = rlist[(int)(frame + 1)];
-            uint iv2 = rlist[(int)(frame + 2)];
-            ivs = createIVs(iv1, iv2, ivsLower, ivsUpper);
-            return ivs;
-        }
-
-        private uint[] createIVs(uint iv1, uint ivs2, uint[] ivsLower, uint[] ivsUpper)
-        {
-            uint[] ivs = new uint[6];
-
-            for (int x = 0; x < 3; x++)
-            {
-                int q = x * 5;
-                uint iv = (iv1 >> q) & 31;
-                if (iv >= ivsLower[x] && iv <= ivsUpper[x])
-                    ivs[x] = iv;
-                else
-                    return null;
-            }
-
-            uint iV = (ivs2 >> 5) & 31;
-            if (iV >= ivsLower[3] && iV <= ivsUpper[3])
-                ivs[3] = iV;
-            else
-                return null;
-
-            iV = (ivs2 >> 10) & 31;
-            if (iV >= ivsLower[4] && iV <= ivsUpper[4])
-                ivs[4] = iV;
-            else
-                return null;
-
-            iV = ivs2 & 31;
-            if (iV >= ivsLower[5] && iV <= ivsUpper[5])
-                ivs[5] = iV;
-            else
-                return null;
-
-            return ivs;
-        }
-
-        private uint pidChk(uint frame, uint xor_val)
-        {
-            uint pid = (rlist[(int)(frame + 4)] << 16) | rlist[(int)(frame + 5)];
-            if (xor_val == 1)
-                pid = pid ^ 0x80008000;
-
-            return pid;
         }
         #endregion
         #endregion
 
         #region Channel
 
-        private void getChannelMethod(uint[] ivsLower, uint[] ivsUpper)
+        private void getChannelMethod()
         {
             uint method = 1;
 
@@ -776,83 +1062,130 @@ namespace GameCubeRNG
                 method *= temp;
             }
 
-            if (method > 120)
+            switch (cores)
             {
-                searchThread = new Thread[1];
-                searchThread[0] = new Thread(() => generateChannel2(ivsLower, ivsUpper));
-                searchThread[0].Start();
-                var update = new Thread(updateGUI);
-                update.Start();
-            }
-            else
-            {
-                searchThread = new Thread[1];
-                searchThread[0] = new Thread(() => generateChannel(ivsLower, ivsUpper));
-                searchThread[0].Start();
-                var update = new Thread(updateGUI);
-                update.Start();
+                case 1:
+                    if (method > 94)
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateChannel2(0, 64, 0));
+                        searchThread[0].Start();
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateChannel());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 2:
+                    if (method > 48)
+                    {
+                        searchThread = new Thread[2];
+                        for (int i = 0; i < 1; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateChannel2((uint)i * 0x40000000, 32, i));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateChannel());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 4:
+                    if (method > 26)
+                    {
+                        searchThread = new Thread[4];
+                        for (int i = 0; i < 4; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateChannel2((uint)i * 0x20000000, 16, i));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateChannel());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 8:
+                    if (method > 22)
+                    {
+                        searchThread = new Thread[8];
+                        for (int i = 0; i < 8; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateChannel2((uint)i * 0x10000000, 8, i));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateChannel());
+                        searchThread[0].Start();
+                    }
+                    break;
             }
         }
 
         #region Search 1
-        private void generateChannel(uint[] ivsLower, uint[] ivsUpper)
+        private void generateChannel()
         {
-            isSearching = true;
-            uint ability = getAbility();
-            uint gender = getGender();
-
             for (uint a = ivsLower[0]; a <= ivsUpper[0]; a++)
                 for (uint b = ivsLower[1]; b <= ivsUpper[1]; b++)
                     for (uint c = ivsLower[2]; c <= ivsUpper[2]; c++)
                         for (uint d = ivsLower[3]; d <= ivsUpper[3]; d++)
+                        {
+                            Invoke(new Action(() => { binding.ResetBindings(false); }));
                             for (uint e = ivsLower[4]; e <= ivsUpper[4]; e++)
-                            {
-                                refresh = true;
                                 for (uint f = ivsLower[5]; f <= ivsUpper[5]; f++)
-                                    checkSeedChannel(a, b, c, d, e, f, ability, gender);
-                            }
+                                    checkSeedChannel(a, b, c, d, e, f);
+                        }
 
             isSearching = false;
+            Invoke(new Action(() => { binding.ResetBindings(false); }));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
         }
 
-        private void checkSeedChannel(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint ability, uint gender)
+        private void checkSeedChannel(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
             uint x16 = spd << 27;
             uint upper = x16 | 0x7ffffff;
+            var rng = new XdRngR(0);
 
             while (x16 < upper)
             {
-                var rng = new XdRngR(++x16);
-                uint temp = rng.GetNext32BitNumber() >> 27;
-                if (temp == spa)
+                rng.Seed = ++x16;
+                if (rng.GetNext16BitNumber() >> 11 == spa)
                 {
-                    temp = rng.GetNext32BitNumber() >> 27;
-                    if (temp == spe)
+                    if (rng.GetNext16BitNumber() >> 11 == spe)
                     {
-                        temp = rng.GetNext32BitNumber() >> 27;
-                        if (temp == def)
+                        if (rng.GetNext16BitNumber() >> 11 == def)
                         {
-                            temp = rng.GetNext32BitNumber() >> 27;
-                            if (temp == atk)
+                            if (rng.GetNext16BitNumber() >> 11 == atk)
                             {
-                                temp = rng.GetNext32BitNumber() >> 27;
-                                if (temp == hp)
+                                if (rng.GetNext16BitNumber() >> 11 == hp)
                                 {
-                                    for (int x = 0; x < 3; x++)
-                                        rng.GetNext32BitNumber();
+                                    rng.GetNext32BitNumber(3);
                                     uint pid2 = rng.GetNext16BitNumber();
                                     uint pid1 = rng.GetNext16BitNumber();
                                     uint sid = rng.GetNext16BitNumber();
                                     uint pid = (pid1 << 16) | pid2;
                                     if ((pid2 > 7 ? 0 : 1) != (pid1 ^ sid ^ 40122))
                                         pid ^= 0x80000000;
-                                    uint nature = pid - 25 * (pid / 25);
+                                    uint nature = pid % 25;
                                     if (natureList == null || natureList.Contains(nature))
                                     {
                                         uint seed = rng.GetNext32BitNumber();
-                                        shinyval = (40122 ^ (sid)) >> 3;
-                                        filterSeedChannel(hp, atk, def, spa, spd, spe, ability, gender, seed, pid, nature);
+                                        shinyval[0] = (40122 ^ (sid)) >> 3;
+                                        filterSeedChannel(hp, atk, def, spa, spd, spe, seed, pid, nature, 0);
                                     }
                                 }
                             }
@@ -865,159 +1198,152 @@ namespace GameCubeRNG
 
         #region Search 2
         //Credits to Zari and amab for this
-        private void generateChannel2(uint[] ivsLower, uint[] ivsUpper)
+        private void generateChannel2(uint seed, uint num1, int shinyIndex)
         {
-            uint s = 0;
-            uint srange = 1048576;
-            isSearching = true;
+            uint[] seedShort = new uint[13];
+            uint[] seedLong = new uint[13];
+            seedShort[0] = seed >> 16;
+            seedLong[0] = seed;
+            var rng = new XdRng(seed);
 
-            uint ability = getAbility();
-            uint gender = getGender();
+            for (int i = 0; i < 12; i++)
+            {
+                seedShort[i] = rng.GetNext16BitNumber();
+                seedLong[i] = rng.GetNext32BitNumber();
+            }
+
+            uint pid, pid1, pid2, nature, sid;
+            uint[] ivs;
+            int j = 12;
 
             for (uint z = 0; z < 32; z++)
             {
-                for (uint h = 0; h < 64; h++)
+                for (uint h = 0; h < num1; h++)
                 {
-                    populate(s, srange);
-                    for (uint n = 0; n < srange; n++)
+                    for (uint n = 0; n < 1048576; n++, seedShort[j] = rng.GetNext16BitNumber(), seedLong[j] = rng.Seed)
                     {
-                        uint[] ivs = calcIVsChannel(ivsLower, ivsUpper, n, 0);
-                        if (ivs != null)
-                        {
-                            uint pid = pidChkChannel(rlist[(int)(n + 2)], rlist[(int)(n + 3)], rlist[(int)n + 1]);
-                            uint nature = pid - 25 * (pid / 25);
-                            if (natureList == null || natureList.Contains(nature))
-                            {
-                                shinyval = (40122 ^ rlist[(int)n + 1]) >> 3;
-                                filterSeedChannel(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, slist[(int)n], pid, nature);
-                            }
+                        if (++j > 12)
+                            j = 0;
 
-                            ivs = calcIVsChannel(ivsLower, ivsUpper, n, 1);
+                        pid1 = seedShort[j >= 11 ? j - 11 : j + 2];
+                        pid2 = seedShort[j >= 10 ? j - 10 : j + 3];
+                        pid = (pid1 << 16) | pid2;
+                        sid = seedShort[j >= 12 ? j - 12 : j + 1];
+                        if ((pid2 > 7 ? 0 : 1) != (pid1 ^ sid ^ 40122))
+                            pid ^= 0x80000000;
+                        nature = pid % 25;
+
+                        if (natureList == null || natureList.Contains(nature))
+                        {
+
+                            ivs = createIVsChannel(new uint[] { seedShort[j >= 6 ? j - 6 : j + 7] >> 11,
+                                                            seedShort[j >= 5 ? j - 5 : j + 8] >> 11,
+                                                            seedShort[j >= 4 ? j - 4 : j + 9] >> 11,
+                                                            seedShort[j >= 2 ? j - 2 : j + 11] >> 11,
+                                                            seedShort[j >= 1 ? j - 1 : j + 12] >> 11,
+                                                            seedShort[j >= 3 ? j - 3 : j + 10] >> 11 });
                             if (ivs != null)
                             {
-                                pid = pidChkChannel(rlist[(int)(n + 2)] ^ 0x8000, rlist[(int)(n + 3)] ^ 0x8000, rlist[(int)n + 1] ^ 0x8000);
-                                nature = pid - 25 * (pid / 25);
-                                if (natureList == null || natureList.Contains(nature))
-                                {
-                                    shinyval = (40122 ^ (rlist[(int)n + 1] ^ 0x8000)) >> 3;
-                                    filterSeedChannel(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, (slist[(int)n] ^ 0x80000000), pid, nature);
-                                }
+                                shinyval[shinyIndex] = (40122 ^ sid) >> 3;
+                                filterSeedChannel(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], seedLong[j], pid, nature, shinyIndex);
+                            }
+                        }
+
+                        pid ^= 0x80008000;
+                        nature = pid % 25;
+
+                        if (natureList == null || natureList.Contains(nature))
+                        {
+                            ivs = createIVsChannel(new uint[] { (seedShort[j >= 6 ? j - 6 : j + 7] ^ 0x8000) >> 11,
+                                                            (seedShort[j >= 5 ? j - 5 : j + 8] ^ 0x8000) >> 11,
+                                                            (seedShort[j >= 4 ? j - 4 : j + 9] ^ 0x8000) >> 11,
+                                                            (seedShort[j >= 2 ? j - 2 : j + 11] ^ 0x8000) >> 11,
+                                                            (seedShort[j >= 1 ? j - 1 : j + 12] ^ 0x8000) >> 11,
+                                                            (seedShort[j >= 3 ? j - 3 : j + 10] ^ 0x8000) >> 11 });
+                            if (ivs != null)
+                            {
+                                shinyval[shinyIndex] = (40122 ^ (sid ^ 0x8000)) >> 3;
+                                filterSeedChannel(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], seedLong[j] ^ 0x80000000, pid, nature, shinyIndex);
                             }
                         }
                     }
-                    refresh = true;
-                    s = slist[(int)srange];
-                    slist.Clear();
-                    rlist.Clear();
+                    Invoke(new Action(() => { binding.ResetBindings(false); }));
                 }
             }
             isSearching = false;
+            Invoke(new Action(() => { binding.ResetBindings(false); }));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
         }
 
-        private uint[] calcIVsChannel(uint[] ivsLower, uint[] ivsUpper, uint frame, uint xorvalue)
+        private uint[] createIVsChannel(uint[] iv)
         {
-            uint[] ivs;
-            if (xorvalue == 0)
-            {
-                uint[] iv = { rlist[(int)(frame + 7)], rlist[(int)(frame + 8)], rlist[(int)(frame + 9)], rlist[(int)(frame + 11)], rlist[(int)(frame + 12)], rlist[(int)(frame + 10)] };
-                ivs = createIVsChannel(iv, ivsLower, ivsUpper);
-            }
-            else
-            {
-                uint[] iv = { rlist[(int)(frame + 7)] ^ 0x8000, rlist[(int)(frame + 8)] ^ 0x8000, rlist[(int)(frame + 9)] ^ 0x8000, rlist[(int)(frame + 11)] ^ 0x8000, rlist[(int)(frame + 12)] ^ 0x8000, rlist[(int)(frame + 10)] ^ 0x8000 };
-                ivs = createIVsChannel(iv, ivsLower, ivsUpper);
-            }
-
-            return ivs;
-        }
-
-        private uint[] createIVsChannel(uint[] iv, uint[] ivsLower, uint[] ivsUpper)
-        {
-            uint[] ivs = new uint[6];
-
             for (int x = 0; x < 6; x++)
-            {
-                uint iV = iv[x] >> 11;
-                if (iV >= ivsLower[x] && iV <= ivsUpper[x])
-                    ivs[x] = iV;
-                else
+                if (iv[x] < ivsLower[x] || iv[x] > ivsUpper[x])
                     return null;
-            }
-
-            return ivs;
+            return iv;
         }
 
-        private uint pidChkChannel(uint pid1, uint pid2, uint sid)
-        {
-            uint pid = pid1 << 16 | pid2;
-            if ((pid2 > 7 ? 0 : 1) != (pid1 ^ sid ^ 40122))
-                pid ^= 0x80000000;
-            return pid;
-        }
-
-        private void filterSeedChannel(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint ability, uint gender, uint seed, uint pid, uint nature)
+        private void filterSeedChannel(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint seed, uint pid, uint nature, int shinyIndex)
         {
             String shiny = "";
-            if (Shiny_Check.Checked == true)
+            if (Shiny_Check.Checked)
             {
-                if (!isShiny(pid))
+                if (!isShiny(pid, shinyIndex))
                     return;
                 shiny = "!!!";
             }
 
             uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
-            if (hiddenPowerList != null)
-                if (!hiddenPowerList.Contains(actualHP))
-                    return;
+            if (hiddenPowerList != null && !hiddenPowerList.Contains(actualHP))
+                return;
 
-            if (ability != 0)
-                if ((pid & 1) != (ability - 1))
-                    return;
-            ability = pid & 1;
+            uint ability = pid & 1;
+            if (abilityFilter != 0 && (ability != (abilityFilter - 1)))
+                return;
 
-            switch (gender)
+            uint gender = pid & 255;
+            switch (genderFilter)
             {
                 case 1:
-                    if ((pid & 255) < 127)
+                    if (gender < 127)
                         return;
                     break;
                 case 2:
-                    if ((pid & 255) > 126)
+                    if (gender > 126)
                         return;
                     break;
                 case 3:
-                    if ((pid & 255) < 191)
+                    if (gender < 191)
                         return;
                     break;
                 case 4:
-                    if ((pid & 255) > 190)
+                    if (gender > 190)
                         return;
                     break;
                 case 5:
-                    if ((pid & 255) < 64)
+                    if (gender < 64)
                         return;
                     break;
                 case 6:
-                    if ((pid & 255) > 63)
+                    if (gender > 63)
                         return;
                     break;
                 case 7:
-                    if ((pid & 255) < 31)
+                    if (gender < 31)
                         return;
                     break;
                 case 8:
-                    if ((pid & 255) > 30)
+                    if (gender > 30)
                         return;
                     break;
             }
-            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, shiny, seed, "");
+            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, shiny, seed, "", shinyIndex);
         }
         #endregion
         #endregion
 
         #region Reverse Method 1
-        private void getRMethod(uint[] ivsLower, uint[] ivsUpper)
+        private void getRMethod()
         {
             uint method = 1;
 
@@ -1027,51 +1353,102 @@ namespace GameCubeRNG
                 method *= temp;
             }
 
-            if (method > 76871)
+            switch (cores)
             {
-                searchThread = new Thread[1];
-                searchThread[0] = new Thread(() => generateR2(ivsLower, ivsUpper));
-                searchThread[0].Start();
-                var update = new Thread(updateGUI);
-                update.Start();
-            }
-            else
-            {
-                searchThread = new Thread[1];
-                searchThread[0] = new Thread(() => generateR(ivsLower, ivsUpper));
-                searchThread[0].Start();
-                var update = new Thread(updateGUI);
-                update.Start();
+                case 1:
+                    if (method > 162268)
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateR2(0, 64));
+                        searchThread[0].Start();
+                        Thread.Sleep(200);
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateR());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 2:
+                    if (method > 83720)
+                    {
+                        searchThread = new Thread[2];
+                        for (int i = 0; i < 2; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateR2((uint)(i * 0x40000000), 32));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateR());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 4:
+                    if (method > 45918)
+                    {
+                        searchThread = new Thread[4];
+                        for (int i = 0; i < 4; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateR2((uint)(i * 0x20000000), 16));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateR());
+                        searchThread[0].Start();
+                    }
+                    break;
+                case 8:
+                    if (method > 34970)
+                    {
+                        searchThread = new Thread[8];
+                        for (int i = 0; i < 8; i++)
+                        {
+                            searchThread[i] = new Thread(() => generateR2((uint)(i * 0x10000000), 8));
+                            searchThread[i].Start();
+                            Thread.Sleep(200);
+                        }
+                    }
+                    else
+                    {
+                        searchThread = new Thread[1];
+                        searchThread[0] = new Thread(() => generateR());
+                        searchThread[0].Start();
+                    }
+                    break;
             }
         }
 
         #region Search 1
-        private void generateR(uint[] ivsLower, uint[] ivsUpper)
+        private void generateR()
         {
-            isSearching = true;
-            uint ability = getAbility();
-            uint gender = getGender();
-
             for (uint a = ivsLower[0]; a <= ivsUpper[0]; a++)
                 for (uint b = ivsLower[1]; b <= ivsUpper[1]; b++)
                     for (uint c = ivsLower[2]; c <= ivsUpper[2]; c++)
                         for (uint d = ivsLower[3]; d <= ivsUpper[3]; d++)
+                        {
+                            Invoke(new Action(() => { binding.ResetBindings(false); }));
                             for (uint e = ivsLower[4]; e <= ivsUpper[4]; e++)
-                            {
-                                refresh = true;
                                 for (uint f = ivsLower[5]; f <= ivsUpper[5]; f++)
-                                    checkSeedR(a, b, c, d, e, f, ability, gender);
-                            }
+                                    checkSeedR(a, b, c, d, e, f);
+                        }
 
             isSearching = false;
+            Invoke(new Action(() => { binding.ResetBindings(false); }));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
         }
 
-        //Credits to RNG reporter for this
-        private void checkSeedR(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint ability, uint gender)
+        private void checkSeedR(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
             uint x4 = hp | (atk << 5) | (def << 10);
-            uint x4_2 = x4 ^ 0x8000;
             uint ex4 = spe | (spa << 5) | (spd << 10);
             uint ex4_2 = ex4 ^ 0x8000;
             uint ivs_1b = x4 << 16;
@@ -1085,150 +1462,84 @@ namespace GameCubeRNG
                     uint pid2 = reverse(seedb);
                     uint pid1 = reverse(pid2);
                     uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                    uint nature = pid - 25 * (pid / 25);
+                    uint nature = pid % 25;
                     uint seed = reverse(pid1);
                     if (natureList == null || natureList.Contains(nature))
                     {
-                        filterSeed(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, seed);
+                        filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
                     }
 
                     pid ^= 0x80008000;
-                    nature = pid - 25 * (pid / 25);
+                    nature = pid % 25;
                     if (natureList == null || natureList.Contains(nature))
-                    {
-                        seed ^= 0x80000000;
-                        filterSeed(hp, atk, def, spa, spd, spe, ability, gender, pid, nature, seed);
-                    }
+                        filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
                 }
             }
         }
         #endregion
 
         #region Search 2
-        private void generateR2(uint[] ivsLower, uint[] ivsUpper)
+        private void generateR2(uint seed, int num1)
         {
-            uint s = 0;
-            uint srange = 1048576;
-            isSearching = true;
+            uint[] seedLong = new uint[5];
+            uint[] seedShort = new uint[5];
+            seedLong[0] = seed;
+            seedShort[0] = seed >> 16;
+            var rng = new PokeRng(seed);
 
-            uint ability = getAbility();
-            uint gender = getGender();
+            for (int i = 1; i < 5; i++)
+            {
+                seedShort[i] = rng.GetNext16BitNumber();
+                seedLong[i] = rng.Seed;
+            }
+
+            uint pid, nature;
+            uint[] ivs;
+            int j = 4;
 
             for (uint z = 0; z < 32; z++)
             {
-                for (uint h = 0; h < 64; h++)
+                for (uint h = 0; h < num1; h++)
                 {
-                    populateR(s, srange);
-                    for (uint n = 0; n < srange; n++)
+                    for (uint n = 0; n < 1048576; n++, seedShort[j] = rng.GetNext16BitNumber(), seedLong[j] = rng.Seed)
                     {
-                        uint[] ivs = calcIVsR(ivsLower, ivsUpper, n);
+                        if (++j > 4)
+                            j = 0;
+
+                        ivs = createIVs(seedShort[j >= 2 ? j - 2 : j + 3], seedShort[j >= 1 ? j - 1 : j + 4]);
                         if (ivs != null)
                         {
-                            uint pid = pidChkR(n, 0);
-                            uint nature = pid - 25 * (pid / 25);
+                            pid = seedLong[j >= 4 ? j - 4 : j + 1] & 0xFFFF0000 | seedShort[j >= 3 ? j - 3 : j + 2];
+                            nature = pid % 25;
                             if (natureList == null || natureList.Contains(nature))
-                                filterSeed(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, pid, nature, slist[(int)(n)]);
+                                filterSeed(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seedLong[j]);
 
-                            pid = pidChkR(n, 1);
-                            nature = pid - 25 * (pid / 25);
+                            pid ^= 0x80008000;
+                            nature = pid % 25;
                             if (natureList == null || natureList.Contains(nature))
-                                filterSeed(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, pid, nature, slist[(int)(n)] ^ 0x80000000);
+                                filterSeed(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seedLong[j] ^ 0x80000000);
                         }
                     }
-                    refresh = true;
-                    s = slist[(int)srange];
-                    slist.Clear();
-                    rlist.Clear();
+                    Invoke(new Action(() => { binding.ResetBindings(false); }));
                 }
             }
             isSearching = false;
+            Invoke(new Action(() => { binding.ResetBindings(false); }));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
-        }
-
-        private uint populateRNGR(uint seed)
-        {
-            seed = forward(seed);
-            slist.Add(seed);
-            rlist.Add((seed >> 16));
-            return seed;
-        }
-
-        private void populateR(uint seed, uint srange)
-        {
-            uint s = seed;
-            for (uint x = 0; x < (srange + 10); x++)
-                s = populateRNGR(s);
-        }
-
-        private uint[] calcIVsR(uint[] ivsLower, uint[] ivsUpper, uint frame)
-        {
-            uint[] ivs;
-            uint iv1 = rlist[(int)(frame + 3)];
-            uint iv2 = rlist[(int)(frame + 4)];
-            ivs = createIVsR(iv1, iv2, ivsLower, ivsUpper);
-            return ivs;
-        }
-
-        private uint[] createIVsR(uint iv1, uint ivs2, uint[] ivsLower, uint[] ivsUpper)
-        {
-            uint[] ivs = new uint[6];
-
-            for (int x = 0; x < 3; x++)
-            {
-                int q = x * 5;
-                uint iv = (iv1 >> q) & 31;
-                if (iv >= ivsLower[x] && iv <= ivsUpper[x])
-                    ivs[x] = iv;
-                else
-                    return null;
-            }
-
-            uint iV = (ivs2 >> 5) & 31;
-            if (iV >= ivsLower[3] && iV <= ivsUpper[3])
-                ivs[3] = iV;
-            else
-                return null;
-
-            iV = (ivs2 >> 10) & 31;
-            if (iV >= ivsLower[4] && iV <= ivsUpper[4])
-                ivs[4] = iV;
-            else
-                return null;
-
-            iV = ivs2 & 31;
-            if (iV >= ivsLower[5] && iV <= ivsUpper[5])
-                ivs[5] = iV;
-            else
-                return null;
-
-            return ivs;
-        }
-
-        private uint pidChkR(uint frame, uint xor_val)
-        {
-            uint pid = (rlist[(int)(frame + 1)] << 16) | rlist[(int)(frame + 2)];
-            if (xor_val == 1)
-                pid = pid ^ 0x80008000;
-
-            return pid;
         }
         #endregion
         #endregion
 
         #region Wishmkr
-        private void generateWishmkr(uint[] IVsLower, uint[] IVsUpper)
+        private void generateWishmkr()
         {
-            isSearching = true;
-            shinyval = 2505;
-            uint ability = getAbility();
-            uint gender = getGender();
-
+            shinyval[0] = 2505;
             for (uint x = 0; x <= 0xFFFF; x++)
             {
                 uint pid1 = forward(x);
                 uint pid2 = forward(pid1);
                 uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                uint nature = pid - 25 * (pid / 25);
+                uint nature = pid % 25;
 
                 if (natureList == null || natureList.Contains(nature))
                 {
@@ -1236,59 +1547,38 @@ namespace GameCubeRNG
                     uint ivs2 = forward(ivs1);
                     ivs1 >>= 16;
                     ivs2 >>= 16;
-                    uint[] ivs = createIVsR(ivs1, ivs2, IVsLower, IVsUpper);
+                    uint[] ivs = createIVs(ivs1, ivs2);
                     if (ivs != null)
-                        filterSeed(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], ability, gender, pid, nature, x);
+                        filterSeed(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, x);
                 }
             }
             isSearching = false;
+            Invoke(new Action(() => { binding.ResetBindings(false); }));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
         }
         #endregion
 
-        private void addSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint pid, String shiny, uint seed, String output)
+        private void addSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint nature, uint ability, uint gender, uint hP, uint pid, String shiny, uint seed, String output, int shinyIndex)
         {
-            String stringNature = Natures[nature];
-            String hPString = hiddenPowers[calcHP(hp, atk, def, spa, spd, spe)];
-            int hpPower = calcHPPower(hp, atk, def, spa, spd, spe);
-            gender = pid & 255;
-            char gender1;
-            char gender2;
-            char gender3;
-            char gender4;
-
-            if (!galesFlag)
-                if (shiny == "")
-                    if (isShiny(pid))
-                        shiny = "!!!";
-
-            if (galesFlag && output.Equals(""))
-                output = "Pass NL";
-
-            gender1 = gender < 31 ? 'F' : 'M';
-            gender2 = gender < 64 ? 'F' : 'M';
-            gender3 = gender < 126 ? 'F' : 'M';
-            gender4 = gender < 191 ? 'F' : 'M';
-
             displayList.Insert(0, new DisplayList
             {
-                Seed = seed.ToString("x").ToUpper(),
-                PID = pid.ToString("x").ToUpper(),
-                Shiny = shiny,
-                Nature = stringNature,
-                Ability = (int)ability,
-                Hp = (int)hp,
-                Atk = (int)atk,
-                Def = (int)def,
-                SpA = (int)spa,
-                SpD = (int)spd,
-                Spe = (int)spe,
-                Hidden = hPString,
-                Power = hpPower,
-                Eighth = gender1,
-                Quarter = gender2,
-                Half = gender3,
-                Three_Fourths = gender4,
+                Seed = seed.ToString("X"),
+                PID = pid.ToString("X"),
+                Shiny = !galesFlag ? shiny == "" ? isShiny(pid, shinyIndex) ? "!!!" : "" : shiny : shiny,
+                Nature = Natures[nature],
+                Ability = ability,
+                Hp = hp,
+                Atk = atk,
+                Def = def,
+                SpA = spa,
+                SpD = spd,
+                Spe = spe,
+                Hidden = hiddenPowers[hP],
+                Power = calcHPPower(hp, atk, def, spa, spd, spe),
+                Eighth = gender < 31 ? 'F' : 'M',
+                Quarter = gender < 64 ? 'F' : 'M',
+                Half = gender < 126 ? 'F' : 'M',
+                Three_Fourths = gender < 191 ? 'F' : 'M',
                 Reason = output
             });
         }
@@ -1298,7 +1588,7 @@ namespace GameCubeRNG
 
         private void generateShadow_Click(object sender, EventArgs e)
         {
-            getIVsShadow(out uint[] ivsLower, out uint[] ivsUpper);
+            getIVsShadow(out ivsLower, out ivsUpper);
             if (ivsLower[0] > ivsUpper[0])
                 MessageBox.Show("HP: Lower limit > Upper limit");
             else if (ivsLower[1] > ivsUpper[1])
@@ -1337,26 +1627,26 @@ namespace GameCubeRNG
                 uint.TryParse(maskedTextBoxMaxFrames.Text, out uint maxFrame);
                 uint.TryParse(textBoxSeed.Text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out uint seed);
                 int shadowMethod = comboBoxMethodShadow.SelectedIndex;
-                uint gender = (uint)comboBoxGenderShadow.SelectedIndex;
-                uint ability = (uint)comboBoxAbilityShadow.SelectedIndex;
+                genderFilter = (uint)comboBoxGenderShadow.SelectedIndex;
+                abilityFilter = (uint)comboBoxAbilityShadow.SelectedIndex;
                 natureLock = new NatureLock(comboBoxShadow.SelectedIndex);
-                shadow = natureLock.getType();
+                shadow = natureLock.getType(comboBoxShadow.SelectedIndex);
 
-                shadowDisplay = new List<ShadowDisplay>();
+                shadowDisplay.Clear();
+                bindingShadow.ResetBindings(false);
+                isSearching = true;
                 status.Text = "Searching";
 
                 searchThread = new Thread[1];
-                searchThread[0] = new Thread(() => shadowSearch(ivsLower, ivsUpper, initialFrame, maxFrame, seed, shadowMethod, gender, ability));
+                searchThread[0] = new Thread(() => shadowSearch(initialFrame, maxFrame, seed, shadowMethod));
                 searchThread[0].Start();
             }
         }
 
-        private void shadowSearch(uint[] ivsLower, uint[] ivsUpper, uint initialFrame, uint maxFrame, uint inSeed, int secondMethod, uint gender, uint ability)
+        private void shadowSearch(uint initialFrame, uint maxFrame, uint inSeed, int secondMethod)
         {
             var rng = new XdRng(inSeed);
-
-            for (uint cnt = 1; cnt < initialFrame; cnt++)
-                rng.GetNext32BitNumber();
+            rng.GetNext32BitNumber(initialFrame == 0 ? 0 : (int)initialFrame - 1);
 
             uint pid, iv1, iv2, nature;
             uint[] ivs;
@@ -1366,20 +1656,26 @@ namespace GameCubeRNG
                 //No NL
                 case 0:
 
-                    List<uint> rand = new List<uint>();
+                    uint[] rand = new uint[6];
+                    rand[0] = rng.Seed >> 16;
 
-                    for (int x = 0; x < 5; x++)
-                        rand.Add(rng.GetNext16BitNumber());
+                    for (int x = 1; x < 6; x++)
+                        rand[x] = rng.GetNext16BitNumber();
 
-                    for (uint cnt = 0; cnt < maxFrame; cnt++, rand.RemoveAt(0), rand.Add(rng.GetNext16BitNumber()))
+                    int j = 5;
+
+                    for (uint cnt = 0; cnt < maxFrame; cnt++, rand[j] = rng.GetNext16BitNumber())
                     {
-                        pid = (rand[3] << 16) | rand[4];
-                        nature = pid - 25 * (pid / 25);
+                        if (++j > 5)
+                            j = 0;
+
+                        pid = (rand[j >= 2 ? j - 2 : j + 4] << 16) | rand[j >= 1 ? j - 1 : j + 5];
+                        nature = pid % 25;
                         if (natureList == null || natureList.Contains(nature))
                         {
-                            ivs = createIVs(rand[0], rand[1], ivsLower, ivsUpper);
+                            ivs = createIVs(rand[j >= 5 ? j - 5 : j + 1], rand[j >= 4 ? j - 4 : j + 2]);
                             if (ivs != null)
-                                filterSeedShadow(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], (int)(initialFrame + cnt), nature, pid, gender, ability);
+                                filterSeedShadow(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], (int)(initialFrame + cnt), nature, pid);
                         }
                     }
 
@@ -1387,19 +1683,19 @@ namespace GameCubeRNG
                 //First shadow
                 case 1:
                     natureLock.rand.Add(rng.Seed);
-                    for (int x = 0; x < 2000; x++)
+                    for (uint x = 0; x < 2999; x++)
                         natureLock.rand.Add(rng.GetNext32BitNumber());
 
                     for (uint cnt = 0; cnt < maxFrame; cnt++, natureLock.rand.RemoveAt(0), natureLock.rand.Add(rng.GetNext32BitNumber()))
                     {
-                        natureLock.method2FirstShadow(out pid, out iv1, out iv2);
+                        natureLock.methodShadowFirstShadow(out pid, out iv1, out iv2);
 
-                        nature = pid - 25 * (pid / 25);
+                        nature = pid % 25;
                         if (natureList == null || natureList.Contains(nature))
                         {
-                            ivs = createIVs(iv1, iv2, ivsLower, ivsUpper);
+                            ivs = createIVs(iv1, iv2);
                             if (ivs != null)
-                                filterSeedShadow(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], (int)(cnt + initialFrame), nature, pid, gender, ability);
+                                filterSeedShadow(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], (int)(cnt + initialFrame), nature, pid);
                         }
                     }
                     break;
@@ -1410,57 +1706,57 @@ namespace GameCubeRNG
                         //Set
                         case 0:
                             natureLock.rand.Add(rng.Seed);
-                            for (int x = 0; x < 2000; x++)
+                            for (int x = 0; x < 2999; x++)
                                 natureLock.rand.Add(rng.GetNext32BitNumber());
 
                             for (uint cnt = 0; cnt < maxFrame; cnt++, natureLock.rand.RemoveAt(0), natureLock.rand.Add(rng.GetNext32BitNumber()))
                             {
-                                natureLock.method2SecondShadowSet(out pid, out iv1, out iv2);
+                                natureLock.methodShadowSecondShadowSet(out pid, out iv1, out iv2);
 
-                                nature = pid - 25 * (pid / 25);
+                                nature = pid % 25;
                                 if (natureList == null || natureList.Contains(nature))
                                 {
-                                    ivs = createIVs(iv1, iv2, ivsLower, ivsUpper);
+                                    ivs = createIVs(iv1, iv2);
                                     if (ivs != null)
-                                        filterSeedShadow(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], (int)(cnt + initialFrame), nature, pid, gender, ability);
+                                        filterSeedShadow(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], (int)(cnt + initialFrame), nature, pid);
                                 }
                             }
                             break;
                         //Unset
                         case 1:
                             natureLock.rand.Add(rng.Seed);
-                            for (int x = 0; x < 2000; x++)
+                            for (int x = 0; x < 2999; x++)
                                 natureLock.rand.Add(rng.GetNext32BitNumber());
 
                             for (uint cnt = 0; cnt < maxFrame; cnt++, natureLock.rand.RemoveAt(0), natureLock.rand.Add(rng.GetNext32BitNumber()))
                             {
-                                natureLock.method2SecondShadowUnset(out pid, out iv1, out iv2);
+                                natureLock.methodShadowSecondShadowUnset(out pid, out iv1, out iv2);
 
-                                nature = pid - 25 * (pid / 25);
+                                nature = pid % 25;
                                 if (natureList == null || natureList.Contains(nature))
                                 {
-                                    ivs = createIVs(iv1, iv2, ivsLower, ivsUpper);
+                                    ivs = createIVs(iv1, iv2);
                                     if (ivs != null)
-                                        filterSeedShadow(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], (int)(cnt + initialFrame), nature, pid, gender, ability);
+                                        filterSeedShadow(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], (int)(cnt + initialFrame), nature, pid);
                                 }
                             }
                             break;
                         //Shiny skip
                         case 2:
                             natureLock.rand.Add(rng.Seed);
-                            for (int x = 0; x < 2000; x++)
+                            for (int x = 0; x < 2999; x++)
                                 natureLock.rand.Add(rng.GetNext32BitNumber());
 
                             for (uint cnt = 0; cnt < maxFrame; cnt++, natureLock.rand.RemoveAt(0), natureLock.rand.Add(rng.GetNext32BitNumber()))
                             {
-                                natureLock.method2SecondShinySkip(out pid, out iv1, out iv2);
+                                natureLock.methodShadowSecondShinySkip(out pid, out iv1, out iv2);
 
-                                nature = pid - 25 * (pid / 25);
+                                nature = pid % 25;
                                 if (natureList == null || natureList.Contains(nature))
                                 {
-                                    ivs = createIVs(iv1, iv2, ivsLower, ivsUpper);
+                                    ivs = createIVs(iv1, iv2);
                                     if (ivs != null)
-                                        filterSeedShadow(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], (int)(cnt + initialFrame), nature, pid, gender, ability);
+                                        filterSeedShadow(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], (int)(cnt + initialFrame), nature, pid);
                                 }
                             }
                             break;
@@ -1468,54 +1764,55 @@ namespace GameCubeRNG
                     break;
             }
             isSearching = false;
-            dataGridShadow.Invoke((MethodInvoker)(() => dataGridShadow.DataSource = shadowDisplay));
+            Invoke(new Action(() => { bindingShadow.ResetBindings(false); }));
             status.Invoke((MethodInvoker)(() => status.Text = "Done. - Awaiting Command"));
         }
 
-        public void filterSeedShadow(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, int frame, uint nature, uint pid, uint gender, uint ability)
+        public void filterSeedShadow(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, int frame, uint nature, uint pid)
         {
             uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
             if (hiddenPowerList != null)
                 if (!hiddenPowerList.Contains(actualHP))
                     return;
 
-            if (ability != 0)
-                if ((pid & 1) != (ability - 1))
+            uint ability = pid & 1;
+            if (abilityFilter != 0)
+                if (ability != (abilityFilter - 1))
                     return;
-            ability = pid & 1;
 
-            switch (gender)
+            uint gender = pid & 255;
+            switch (genderFilter)
             {
                 case 1:
-                    if ((pid & 255) < 127)
+                    if (gender < 127)
                         return;
                     break;
                 case 2:
-                    if ((pid & 255) > 126)
+                    if (gender > 126)
                         return;
                     break;
                 case 3:
-                    if ((pid & 255) < 191)
+                    if (gender < 191)
                         return;
                     break;
                 case 4:
-                    if ((pid & 255) > 190)
+                    if (gender > 190)
                         return;
                     break;
                 case 5:
-                    if ((pid & 255) < 64)
+                    if (gender < 64)
                         return;
                     break;
                 case 6:
-                    if ((pid & 255) > 63)
+                    if (gender > 63)
                         return;
                     break;
                 case 7:
-                    if ((pid & 255) < 31)
+                    if (gender < 31)
                         return;
                     break;
                 case 8:
-                    if ((pid & 255) > 30)
+                    if (gender > 30)
                         return;
                     break;
             }
@@ -1524,38 +1821,24 @@ namespace GameCubeRNG
 
         private void addSeedShadow(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, int frame, uint nature, uint ability, uint gender, uint hP, uint pid)
         {
-            String stringNature = Natures[nature];
-            String hPString = hiddenPowers[calcHP(hp, atk, def, spa, spd, spe)];
-            int hpPower = calcHPPower(hp, atk, def, spa, spd, spe);
-            gender = pid & 255;
-            char gender1;
-            char gender2;
-            char gender3;
-            char gender4;
-
-            gender1 = gender < 31 ? 'F' : 'M';
-            gender2 = gender < 64 ? 'F' : 'M';
-            gender3 = gender < 126 ? 'F' : 'M';
-            gender4 = gender < 191 ? 'F' : 'M';
-
             shadowDisplay.Add(new ShadowDisplay
             {
                 Frame = frame,
-                PID = pid.ToString("x").ToUpper(),
-                Nature = stringNature,
-                Ability = (int)ability,
-                Hp = (int)hp,
-                Atk = (int)atk,
-                Def = (int)def,
-                SpA = (int)spa,
-                SpD = (int)spd,
-                Spe = (int)spe,
-                Hidden = hPString,
-                Power = hpPower,
-                Eighth = gender1,
-                Quarter = gender2,
-                Half = gender3,
-                Three_Fourths = gender4
+                PID = pid.ToString("X"),
+                Nature = Natures[nature],
+                Ability = ability,
+                Hp = hp,
+                Atk = atk,
+                Def = def,
+                SpA = spa,
+                SpD = spd,
+                Spe = spe,
+                Hidden = hiddenPowers[hP],
+                Power = calcHPPower(hp, atk, def, spa, spd, spe),
+                Eighth = gender < 31 ? 'F' : 'M',
+                Quarter = gender < 64 ? 'F' : 'M',
+                Half = gender < 126 ? 'F' : 'M',
+                Three_Fourths = gender < 191 ? 'F' : 'M'
             });
         }
 
@@ -1637,36 +1920,39 @@ namespace GameCubeRNG
             }
         }
 
-        private int getNatureLock()
+        private uint[] createIVs(uint iv1, uint ivs2)
         {
-            if (shadowPokemon.InvokeRequired)
-                return (int)shadowPokemon.Invoke(new Func<int>(getNatureLock));
-            else
-                return (int)shadowPokemon.SelectedIndex;
-        }
+            uint[] ivs = new uint[6];
 
-        private uint getAbility()
-        {
-            if (abilityType.InvokeRequired)
-                return (uint)abilityType.Invoke(new Func<uint>(getAbility));
-            else
-                return (uint)abilityType.SelectedIndex;
-        }
+            for (int x = 0; x < 3; x++)
+            {
+                int q = x * 5;
+                uint iv = (iv1 >> q) & 31;
+                if (iv >= ivsLower[x] && iv <= ivsUpper[x])
+                    ivs[x] = iv;
+                else
+                    return null;
+            }
 
-        private uint getGender()
-        {
-            if (genderType.InvokeRequired)
-                return (uint)genderType.Invoke(new Func<uint>(getGender));
+            uint iV = (ivs2 >> 5) & 31;
+            if (iV >= ivsLower[3] && iV <= ivsUpper[3])
+                ivs[3] = iV;
             else
-                return (uint)genderType.SelectedIndex;
-        }
+                return null;
 
-        private uint getSearchMethod()
-        {
-            if (searchMethod.InvokeRequired)
-                return (uint)searchMethod.Invoke(new Func<uint>(getSearchMethod));
+            iV = (ivs2 >> 10) & 31;
+            if (iV >= ivsLower[4] && iV <= ivsUpper[4])
+                ivs[4] = iV;
             else
-                return (uint)searchMethod.SelectedIndex;
+                return null;
+
+            iV = ivs2 & 31;
+            if (iV >= ivsLower[5] && iV <= ivsUpper[5])
+                ivs[5] = iV;
+            else
+                return null;
+
+            return ivs;
         }
 
         private uint forwardXD(uint seed)
@@ -1694,93 +1980,14 @@ namespace GameCubeRNG
             return (int)(30 + ((((hp >> 1) & 1) + 2 * ((atk >> 1) & 1) + 4 * ((def >> 1) & 1) + 8 * ((spe >> 1) & 1) + 16 * ((spa >> 1) & 1) + 32 * ((spd >> 1) & 1)) * 40 / 63));
         }
 
-        private bool isShiny(uint PID)
+        private bool isShiny(uint PID, int shinyIndex)
         {
-            return (((PID >> 16) ^ (PID & 0xffff)) >> 3) == shinyval;
+            return (((PID >> 16) ^ (PID & 0xffff)) >> 3) == shinyval[shinyIndex];
         }
 
         private uint calcHP(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
             return ((((hp & 1) + 2 * (atk & 1) + 4 * (def & 1) + 8 * (spe & 1) + 16 * (spa & 1) + 32 * (spd & 1)) * 15) / 63);
-        }
-        #endregion
-
-        #region GUI code
-        private void updateGUI()
-        {
-            gridUpdate = dataGridUpdate;
-            ThreadDelegate resizeGrid = dataGridViewResult.AutoResizeColumns;
-            try
-            {
-                bool alive = true;
-                while (alive)
-                {
-                    if (refresh)
-                    {
-                        Invoke(gridUpdate);
-                        refresh = false;
-                    }
-                    if (searchThread == null || !isSearching)
-                    {
-                        alive = false;
-                    }
-
-                    Thread.Sleep(500);
-                }
-            }
-            finally
-            {
-                Invoke(gridUpdate);
-                Invoke(resizeGrid);
-            }
-        }
-
-        #region Nested type: ThreadDelegate
-
-        private delegate void ThreadDelegate();
-
-        #endregion
-
-        private void dataGridUpdate()
-        {
-            binding.ResetBindings(true);
-        }
-
-        private String[] addHP()
-        {
-            String[] temp = new String[]
-                {
-                    "Fighting",
-                    "Flying",
-                    "Poison",
-                    "Ground",
-                    "Rock",
-                    "Bug",
-                    "Ghost",
-                    "Steel",
-                    "Fire",
-                    "Water",
-                    "Grass",
-                    "Electric",
-                    "Psychic",
-                    "Ice",
-                    "Dragon",
-                    "Dark"
-                };
-
-            return temp;
-        }
-
-        private String[] addShadowMethod()
-        {
-            String[] temp = new String[]
-                {
-                    "Set",
-                    "Unset",
-                    "Shiny Skip"
-                };
-
-            return temp;
         }
         #endregion
 
@@ -1938,6 +2145,7 @@ namespace GameCubeRNG
                 status.Text = "Cancelled. - Awaiting Command";
                 for (int x = 0; x < searchThread.Length; x++)
                     searchThread[x].Abort();
+                binding.ResetBindings(false);
             }
         }
 
@@ -1959,11 +2167,6 @@ namespace GameCubeRNG
         private void anyHiddenPower_Click(object sender, EventArgs e)
         {
             comboBoxHiddenPower.ClearSelection();
-        }
-
-        private void anyShadowMethod_Click(object sender, EventArgs e)
-        {
-            comboBoxShadowMethod.ClearSelection();
         }
 
         private void hpMaxShadow_Click(object sender, EventArgs e)
@@ -2132,14 +2335,35 @@ namespace GameCubeRNG
         #endregion
 
         #region ComboBox
+        private String[] addHP()
+        {
+            return new String[]
+                {
+                    "Fighting",
+                    "Flying",
+                    "Poison",
+                    "Ground",
+                    "Rock",
+                    "Bug",
+                    "Ghost",
+                    "Steel",
+                    "Fire",
+                    "Water",
+                    "Grass",
+                    "Electric",
+                    "Psychic",
+                    "Ice",
+                    "Dragon",
+                    "Dark"
+                };
+        }
+
         private void setComboBox()
         {
             comboBoxNature.CheckBoxItems[0].Checked = true;
             comboBoxNature.CheckBoxItems[0].Checked = false;
             comboBoxHiddenPower.CheckBoxItems[0].Checked = true;
             comboBoxHiddenPower.CheckBoxItems[0].Checked = false;
-            comboBoxShadowMethod.CheckBoxItems[0].Checked = true;
-            comboBoxShadowMethod.CheckBoxItems[0].Checked = false;
             checkBoxNatureShadow.CheckBoxItems[0].Checked = true;
             checkBoxNatureShadow.CheckBoxItems[0].Checked = false;
             checkBoxHPShadow.CheckBoxItems[0].Checked = true;
@@ -2150,62 +2374,23 @@ namespace GameCubeRNG
         {
             if (galesCheck.Checked == true)
             {
-                List<int> secondShadows = new List<int> { 0, 6, 8, 10, 21, 30, 32, 37, 50, 57, 66, 67, 75, 93 };
-                if (secondShadows.Contains(shadowPokemon.SelectedIndex))
-                {
-                    //shadowMethodLabel.Visible = true;
-                    //comboBoxShadowMethod.Visible = true;
-                    //anyShadowMethod.Visible = true;
-                }
-                else if (shadowPokemon.SelectedIndex == 41)
-                {
-                    shadowMethodLabel.Visible = false;
-                    comboBoxShadowMethod.Visible = false;
-                    anyShadowMethod.Visible = false;
+                if (shadowPokemon.SelectedIndex == 41)
                     Shiny_Check.Visible = true;
-                }
                 else
-                {
-                    shadowMethodLabel.Visible = false;
-                    comboBoxShadowMethod.Visible = false;
-                    anyShadowMethod.Visible = false;
                     Shiny_Check.Visible = false;
-                }
             }
             else
-            {
-                shadowMethodLabel.Visible = false;
-                comboBoxShadowMethod.Visible = false;
-                anyShadowMethod.Visible = false;
                 Shiny_Check.Visible = true;
-            }
         }
 
         private void shadowPokemon_SelectionChangeCommitted(object sender, EventArgs e)
         {
             if (galesCheck.Checked)
             {
-                List<int> secondShadows = new List<int> { 0, 6, 8, 10, 21, 30, 32, 37, 50, 57, 66, 67, 75, 93 };
-                if (secondShadows.Contains(shadowPokemon.SelectedIndex))
-                {
-                    //shadowMethodLabel.Visible = true;
-                    //comboBoxShadowMethod.Visible = true;
-                    //anyShadowMethod.Visible = true;
-                }
-                else if (shadowPokemon.SelectedIndex == 41)
-                {
-                    shadowMethodLabel.Visible = false;
-                    comboBoxShadowMethod.Visible = false;
-                    anyShadowMethod.Visible = false;
+                if (shadowPokemon.SelectedIndex == 41)
                     Shiny_Check.Visible = true;
-                }
                 else
-                {
-                    shadowMethodLabel.Visible = false;
-                    comboBoxShadowMethod.Visible = false;
-                    anyShadowMethod.Visible = false;
                     Shiny_Check.Visible = false;
-                }
             }
         }
 
@@ -2216,9 +2401,6 @@ namespace GameCubeRNG
             {
                 wshMkr.Visible = true;
                 Shiny_Check.Visible = true;
-                shadowMethodLabel.Visible = false;
-                comboBoxShadowMethod.Visible = false;
-                anyShadowMethod.Visible = false;
                 shadowPokemon.Visible = false;
                 galesCheck.Visible = false;
             }
@@ -2228,28 +2410,10 @@ namespace GameCubeRNG
                 Shiny_Check.Visible = true;
                 if (galesCheck.Checked)
                 {
-                    List<int> secondShadows = new List<int> { 0, 6, 8, 10, 21, 30, 32, 37, 50, 57, 66, 67, 75, 93 };
-                    Shiny_Check.Visible = false;
-                    if (secondShadows.Contains(shadowPokemon.SelectedIndex))
-                    {
-                        //shadowMethodLabel.Visible = true;
-                        //comboBoxShadowMethod.Visible = true;
-                        //anyShadowMethod.Visible = true;
-                    }
-                    else if (shadowPokemon.SelectedIndex == 41)
-                    {
-                        shadowMethodLabel.Visible = false;
-                        comboBoxShadowMethod.Visible = false;
-                        anyShadowMethod.Visible = false;
+                    if (shadowPokemon.SelectedIndex == 41)
                         Shiny_Check.Visible = true;
-                    }
                     else
-                    {
-                        shadowMethodLabel.Visible = false;
-                        comboBoxShadowMethod.Visible = false;
-                        anyShadowMethod.Visible = false;
                         Shiny_Check.Visible = false;
-                    }
                 }
                 shadowPokemon.Visible = true;
                 galesCheck.Visible = true;
@@ -2258,9 +2422,6 @@ namespace GameCubeRNG
             {
                 wshMkr.Visible = false;
                 Shiny_Check.Visible = true;
-                shadowMethodLabel.Visible = false;
-                comboBoxShadowMethod.Visible = false;
-                anyShadowMethod.Visible = false;
                 shadowPokemon.Visible = false;
                 galesCheck.Visible = false;
             }
