@@ -25,9 +25,11 @@ namespace GameCubeRNG
         private uint[] ivsLower, ivsUpper, shinyval;
         private int natureLockIndex, cores;
 
-        public GameCube()
+        public GameCube(int TID, int SID)
         {
             InitializeComponent();
+            id.Text = TID.ToString();
+            sid.Text = SID.ToString();
             Reason.Visible = false;
             displayList = new List<DisplayList>();
             shadowDisplay = new List<ShadowDisplay>();
@@ -517,21 +519,15 @@ namespace GameCubeRNG
             {
                 reason = "Shiny skip";
                 var reverse = new XdRngR(seed);
-                bool shinyCheck = true;
                 reverse.GetNext32BitNumber();
                 uint tsv = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
                 uint tsvtemp = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
-                while (shinyCheck)
+                while (tsv == tsvtemp)
                 {
-                    if (tsv == tsvtemp)
-                    {
-                        tsv = tsvtemp;
-                        tsvtemp = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
-                    }
-                    else
-                        shinyCheck = false;
+                    tsvtemp = tsv;
+                    tsv = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
                 }
-                reason = reason + " (TSV: " + tsvtemp + ")";
+                reason = reason + " (TSV: " + tsv + ")";
             }
             addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, shiny, seed, reason, 0);
         }
@@ -785,21 +781,15 @@ namespace GameCubeRNG
             {
                 reason = "Shiny skip";
                 var reverse = new XdRngR(seed);
-                bool shinyCheck = true;
                 reverse.GetNext32BitNumber();
                 uint tsv = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
                 uint tsvtemp = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
-                while (shinyCheck)
+                while (tsv == tsvtemp)
                 {
-                    if (tsv == tsvtemp)
-                    {
-                        tsv = tsvtemp;
-                        tsvtemp = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
-                    }
-                    else
-                        shinyCheck = false;
+                    tsvtemp = tsv;
+                    tsv = (reverse.GetNext16BitNumber() ^ reverse.GetNext16BitNumber()) >> 3;
                 }
-                reason = reason + " (TSV: " + tsvtemp + ")";
+                reason = reason + " (TSV: " + tsv + ")";
             }
             seedList.Add(seed);
             addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, shiny, seed, reason, 0);
