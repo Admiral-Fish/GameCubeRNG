@@ -25,11 +25,9 @@ namespace GameCubeRNG
         private uint[] ivsLower, ivsUpper, shinyval;
         private int natureLockIndex, cores;
 
-        public GameCube(int TID, int SID)
+        public GameCube()
         {
             InitializeComponent();
-            id.Text = TID.ToString();
-            sid.Text = SID.ToString();
             Reason.Visible = false;
             displayList = new List<DisplayList>();
             shadowDisplay = new List<ShadowDisplay>();
