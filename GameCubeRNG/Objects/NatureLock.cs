@@ -33,7 +33,7 @@ namespace GameCubeRNG.Objects
                 case 1:
                     return new LockInfo[] { new LockInfo(18, 0, 126), new LockInfo(12, 0, 126), new LockInfo(0, 0, 126), new LockInfo(6, 127, 255) }; //Arbok
                 case 2:
-                    return null; //Articuno 
+                    return null; //Articuno
                 case 3:
                     return null; //Baltoy 3
                 case 4:
@@ -65,7 +65,7 @@ namespace GameCubeRNG.Objects
                 case 17:
                     return null; //Exeggutor
                 case 18:
-                    return new LockInfo[] { new LockInfo(24, 127, 255), new LockInfo(0, 0, 126), new LockInfo(12, 127, 255) }; //Farfetch'd  
+                    return new LockInfo[] { new LockInfo(24, 127, 255), new LockInfo(0, 0, 126), new LockInfo(12, 127, 255) }; //Farfetch'd
                 case 19:
                     return new LockInfo[] { new LockInfo(18, 0, 126), new LockInfo(6, 0, 126), new LockInfo(24, 127, 255) }; //Golduck
                 case 20:
@@ -105,7 +105,7 @@ namespace GameCubeRNG.Objects
                 case 37:
                     return new LockInfo[] { new LockInfo(12, 0, 126), new LockInfo(6, 127, 255), new LockInfo(24, 127, 255) }; //Marcargo
                 case 38:
-                    return new LockInfo[] { new LockInfo(0, 0, 126), new LockInfo(18, 191, 255), new LockInfo(18, 127, 255) }; //Magmar 
+                    return new LockInfo[] { new LockInfo(0, 0, 126), new LockInfo(18, 191, 255), new LockInfo(18, 127, 255) }; //Magmar
                 case 39:
                     return new LockInfo[] { new LockInfo(12, 0, 126), new LockInfo(0, 127, 255), new LockInfo(18, 0, 255) }; //Magneton
                 case 40:
@@ -219,7 +219,7 @@ namespace GameCubeRNG.Objects
                 case 94:
                     return null; //Zangoose
                 default:
-                    return null; //Zapdos 
+                    return null; //Zapdos
             }
         }
 
@@ -713,7 +713,7 @@ namespace GameCubeRNG.Objects
         {
             switch (natureLockIndex)
             {
-                case 2: //Articuno 
+                case 2: //Articuno
                 case 3: //Baltoy 3
                 case 4: //Baltoy 1
                 case 7: //Beedrill
@@ -733,7 +733,7 @@ namespace GameCubeRNG.Objects
                 case 88: //Teddiursa
                 case 89: //Togepi
                 case 94: //Zangoose
-                default: //Zapdos 
+                default: //Zapdos
                     return 0;
                 case 1: //Arbok
                 case 5: //Baltoy 2
@@ -742,7 +742,7 @@ namespace GameCubeRNG.Objects
                 case 14: //Dugtrio
                 case 15: //Duskull
                 case 16: //Electabuzz
-                case 18: //Farfetch'd  
+                case 18: //Farfetch'd
                 case 19: //Golduck
                 case 20: //Grimer
                 case 22: //Gulpin 3
@@ -753,7 +753,7 @@ namespace GameCubeRNG.Objects
                 case 31: //Kangaskhan
                 case 34: //Lickitung
                 case 36: //Lunatone
-                case 38: //Magmar 
+                case 38: //Magmar
                 case 39: //Magneton
                 case 40: //Makuhita
                 case 41: //Makuhita Colo
@@ -790,6 +790,7 @@ namespace GameCubeRNG.Objects
                 case 90: //Venomoth
                 case 91: //Voltorb
                 case 92: //Vulpix
+                    return 1;
                 case 12: //Dodrio
                 case 33: //Ledyba
                 case 42: //Manectric
