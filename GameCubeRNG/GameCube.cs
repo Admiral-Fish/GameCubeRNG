@@ -78,18 +78,6 @@ namespace GameCubeRNG
             galesCheck.Visible = false;
         }
 
-        private void GameCube_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            e.Cancel = true;
-            if (searchThread != null)
-            {
-                for (int x = 0; x < searchThread.Length; x++)
-                    searchThread[x].Abort();
-                status.Text = "Cancelled. - Awaiting Command";
-            }
-            Hide();
-        }
-
         #region Spread Searcher
         #region Start search
         private void search_Click(object sender, EventArgs e)
