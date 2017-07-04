@@ -2580,7 +2580,6 @@
             this.MinimumSize = new System.Drawing.Size(1160, 661);
             this.Name = "GameCube";
             this.Text = "GameCube RNG";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.GameCube_FormClosing);
             this.Load += new System.EventHandler(this.GameCube_Load);
             this.contextMenuStripGrid.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewResult)).EndInit();
