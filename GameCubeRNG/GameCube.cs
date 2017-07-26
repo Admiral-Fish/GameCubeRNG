@@ -281,7 +281,6 @@ namespace GameCubeRNG
         {
             uint x8 = hp | (atk << 5) | (def << 10);
             uint ex8 = spe | (spa << 5) | (spd << 10);
-            uint ex8_2 = ex8 ^ 0x8000;
             uint ivs_1b = x8 << 16;
             uint ivs_2, seedb, pid1, pid2, pid, nature, galesSeed, xorSeed, xorPID, xorNature, cnt;
             bool pass, xorPass;
@@ -292,10 +291,10 @@ namespace GameCubeRNG
                     for (cnt = 0; cnt <= 0xFFFF; cnt++)
                     {
                         seedb = ivs_1b | cnt;
-                        ivs_2 = forwardXD(seedb) >> 16;
-                        if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                        ivs_2 = forwardXD(seedb);
+                        if (((ivs_2 >> 16) & 0x7FFF) == ex8)
                         {
-                            pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                            pid1 = forwardXD(forwardXD(ivs_2));
                             pid2 = forwardXD(pid1);
                             pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
                             nature = pid % 25;
@@ -318,10 +317,10 @@ namespace GameCubeRNG
                     for (cnt = 0; cnt <= 0xFFFF; cnt++)
                     {
                         seedb = ivs_1b | cnt;
-                        ivs_2 = forwardXD(seedb) >> 16;
-                        if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                        ivs_2 = forwardXD(seedb);
+                        if (((ivs_2 >> 16) & 0x7FFF) == ex8)
                         {
-                            pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                            pid1 = forwardXD(forwardXD(ivs_2));
                             pid2 = forwardXD(pid1);
                             pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
                             nature = pid % 25;
@@ -344,10 +343,10 @@ namespace GameCubeRNG
                     for (cnt = 0; cnt <= 0xFFFF; cnt++)
                     {
                         seedb = ivs_1b | cnt;
-                        ivs_2 = forwardXD(seedb) >> 16;
-                        if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                        ivs_2 = forwardXD(seedb);
+                        if (((ivs_2 >> 16) & 0x7FFF) == ex8)
                         {
-                            pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                            pid1 = forwardXD(forwardXD(ivs_2));
                             pid2 = forwardXD(pid1);
                             pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
                             nature = pid % 25;
@@ -370,10 +369,10 @@ namespace GameCubeRNG
                     for (cnt = 0; cnt <= 0xFFFF; cnt++)
                     {
                         seedb = ivs_1b | cnt;
-                        ivs_2 = forwardXD(seedb) >> 16;
-                        if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                        ivs_2 = forwardXD(seedb);
+                        if (((ivs_2 >> 16) & 0x7FFF) == ex8)
                         {
-                            pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                            pid1 = forwardXD(forwardXD(ivs_2));
                             pid2 = forwardXD(pid1);
                             pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
                             nature = pid % 25;
@@ -404,10 +403,10 @@ namespace GameCubeRNG
                     for (cnt = 0; cnt <= 0xFFFF; cnt++)
                     {
                         seedb = ivs_1b | cnt;
-                        ivs_2 = forwardXD(seedb) >> 16;
-                        if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                        ivs_2 = forwardXD(seedb);
+                        if (((ivs_2 >> 16) & 0x7FFF) == ex8)
                         {
-                            pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                            pid1 = forwardXD(forwardXD(ivs_2));
                             pid2 = forwardXD(pid1);
                             pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
                             nature = pid % 25;
@@ -523,6 +522,7 @@ namespace GameCubeRNG
             var rng = new XdRng(inseed);
             uint pid, iv1, iv2, nature, seed;
             uint[] ivs;
+            int count;
             var info = new NatureLock(natureLockIndex);
 
             switch (shadow)
@@ -565,7 +565,7 @@ namespace GameCubeRNG
                 case ShadowType.SingleLock:
                 case ShadowType.FirstShadow:
                     info.rand.Add(inseed);
-                    for (uint x = 0; x < 10000; x++)
+                    for (uint x = 0; x < 2999; x++)
                         info.rand.Add(rng.GetNext32BitNumber());
 
                     for (uint z = 0; z < 32; z++)
@@ -614,7 +614,9 @@ namespace GameCubeRNG
                         {
                             for (uint n = 0; n < 1048576; n++, info.rand.RemoveAt(0), info.rand.Add(rng.GetNext32BitNumber()))
                             {
-                                info.method2SecondShadowSet(false, out seed, out pid, out iv1, out iv2);
+                                count = info.method2SecondShadowPassNL(false);
+
+                                info.method2SecondShadowSet(false, count, out seed, out pid, out iv1, out iv2);
                                 if (!seedList.Contains(seed))
                                 {
                                     nature = pid % 25;
@@ -626,7 +628,33 @@ namespace GameCubeRNG
                                     }
                                 }
 
-                                info.method2SecondShadowSet(true, out seed, out pid, out iv1, out iv2);
+                                info.method2SecondShadowUnset(false, count, out seed, out pid, out iv1, out iv2);
+                                if (!seedList.Contains(seed))
+                                {
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                    {
+                                        ivs = createIVs(iv1, iv2);
+                                        if (ivs != null)
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 2);
+                                    }
+                                }
+
+                                info.method2SecondShinySkip(false, count, out seed, out pid, out iv1, out iv2);
+                                if (!seedList.Contains(seed))
+                                {
+                                    nature = pid % 25;
+                                    if (natureList == null || natureList.Contains(nature))
+                                    {
+                                        ivs = createIVs(iv1, iv2);
+                                        if (ivs != null)
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 3);
+                                    }
+                                }
+
+                                count = info.method2SecondShadowPassNL(true);
+
+                                info.method2SecondShadowSet(true, count, out seed, out pid, out iv1, out iv2);
                                 if (!seedList.Contains(seed))
                                 {
                                     nature = pid % 25;
@@ -638,7 +666,7 @@ namespace GameCubeRNG
                                     }
                                 }
 
-                                info.method2SecondShadowUnset(false, out seed, out pid, out iv1, out iv2);
+                                info.method2SecondShadowUnset(true, count, out seed, out pid, out iv1, out iv2);
                                 if (!seedList.Contains(seed))
                                 {
                                     nature = pid % 25;
@@ -646,11 +674,11 @@ namespace GameCubeRNG
                                     {
                                         ivs = createIVs(iv1, iv2);
                                         if (ivs != null)
-                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 1);
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 2);
                                     }
                                 }
 
-                                info.method2SecondShadowUnset(true, out seed, out pid, out iv1, out iv2);
+                                info.method2SecondShinySkip(true, count, out seed, out pid, out iv1, out iv2);
                                 if (!seedList.Contains(seed))
                                 {
                                     nature = pid % 25;
@@ -658,31 +686,7 @@ namespace GameCubeRNG
                                     {
                                         ivs = createIVs(iv1, iv2);
                                         if (ivs != null)
-                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 1);
-                                    }
-                                }
-
-                                info.method2SecondShinySkip(false, out seed, out pid, out iv1, out iv2);
-                                if (!seedList.Contains(seed))
-                                {
-                                    nature = pid % 25;
-                                    if (natureList == null || natureList.Contains(nature))
-                                    {
-                                        ivs = createIVs(iv1, iv2);
-                                        if (ivs != null)
-                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 1);
-                                    }
-                                }
-
-                                info.method2SecondShinySkip(true, out seed, out pid, out iv1, out iv2);
-                                if (!seedList.Contains(seed))
-                                {
-                                    nature = pid % 25;
-                                    if (natureList == null || natureList.Contains(nature))
-                                    {
-                                        ivs = createIVs(iv1, iv2);
-                                        if (ivs != null)
-                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 1);
+                                            filterSeedGales2(ivs[0], ivs[1], ivs[2], ivs[3], ivs[4], ivs[5], pid, nature, seed, 3);
                                     }
                                 }
                             }
@@ -884,18 +888,17 @@ namespace GameCubeRNG
 
         private void checkSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
-            uint x8 = hp + (atk << 5) + (def << 10);
-            uint ex8 = spe + (spa << 5) + (spd << 10);
-            uint ex8_2 = ex8 ^ 0x8000;
+            uint x8 = hp | (atk << 5) | (def << 10);
+            uint ex8 = spe | (spa << 5) | (spd << 10);
             uint ivs_1b = x8 << 16;
 
             for (uint cnt = 0; cnt <= 0xFFFF; cnt++)
             {
                 uint seedb = ivs_1b | cnt;
-                uint ivs_2 = forwardXD(seedb) >> 16;
-                if (ivs_2 == ex8 || ivs_2 == ex8_2)
+                uint ivs_2 = forwardXD(seedb);
+                if (((ivs_2 >> 16) & 0x7FFF) == ex8)
                 {
-                    uint pid1 = forwardXD(forwardXD(forwardXD(seedb)));
+                    uint pid1 = forwardXD(forwardXD(ivs_2));
                     uint pid2 = forwardXD(pid1);
                     uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
                     uint nature = pid % 25;
@@ -910,6 +913,112 @@ namespace GameCubeRNG
                 }
 
             }
+
+            /*uint x_test = spe | (spa << 5) | (spd << 10);
+            uint y_test = hp | (atk << 5) | (def << 10);
+            uint y_compare = (y_test - 0x31) & 0xFFFF;
+            uint x8 = x_test << 16;
+            uint seed;
+            uint rng1;
+
+            // Any possible test seed will have at most
+            // a difference of 0x31 from the target seed.
+            // If it's close enough, we can then modify it
+            // to match.
+            if (y_test < 0x31)
+            {
+                for (uint cnt = 0xFFFF; cnt > 0xF2CC; cnt--)
+                {
+                    seed = x8 | cnt;
+
+                    // Do a quick search for matching seeds
+                    // with a lower 16-bits between 0xFFFF and 0xF2CD.
+                    // We'll take the closest matches and subtract 0xD33
+                    // until it produces the correct seed (or doesn't).
+
+                    // Best we can do until we find a way to
+                    // calculate them directly.
+
+                    rng1 = (reverseXD(seed) >> 16);
+
+                    // We don't have to worry about unsigned overflow
+                    // because y_test is never more than 0x7FFF
+                    if (rng1 <= y_compare)
+                    {
+                        rng1 &= 0x7FFF;
+                        while ((seed & 0xFFFF) > 0xD32 && rng1 > y_test)
+                        {
+                            seed = seed - 0xD33;
+                            rng1 = (reverseXD(seed) >> 16) & 0x7FFF;
+                        }
+                    }
+                    else
+                        rng1 &= 0x7FFF;
+
+                    if (rng1 == y_test)
+                    {
+                        uint pid1 = forwardXD(forwardXD(seed));
+                        uint pid2 = forwardXD(pid1);
+                        uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                        uint nature = pid % 25;
+                        seed = reverseXD(reverseXD(seed));
+                        if (natureList == null || natureList.Contains(nature))
+                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
+
+                        pid ^= 0x80008000;
+                        nature = pid % 25;
+                        if (natureList == null || natureList.Contains(nature))
+                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
+                    }
+                }
+            }
+            else
+            {
+                for (uint cnt = 0xFFFF; cnt > 0xF2CC; cnt--)
+                {
+                    seed = x8 | cnt;
+
+                    // Do a quick search for matching seeds
+                    // with a lower 16-bits between 0xFFFF and 0xF2CD.
+                    // We'll take the closest matches and subtract 0xD33
+                    // until it produces the correct seed (or doesn't).
+
+                    // Best we can do until we find a way to
+                    // calculate them directly.
+
+                    rng1 = (reverseXD(seed) >> 16) & 0x7FFF;
+
+                    // We don't have to worry about unsigned overflow
+                    // because y_test is never more than 0x7FFF
+                    if (rng1 >= y_compare)
+                    {
+                        rng1 &= 0x7FFF;
+                        while ((seed & 0xFFFF) > 0xD32 && rng1 < y_test)
+                        {
+                            seed = seed - 0xD33;
+                            rng1 = (reverseXD(seed) >> 16) & 0x7FFF;
+                        }
+                    }
+                    else
+                        rng1 &= 0x7FFF;
+
+                    if (rng1 == y_test)
+                    {
+                        uint pid1 = forwardXD(forwardXD(seed));
+                        uint pid2 = forwardXD(pid1);
+                        uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                        uint nature = pid % 25;
+                        seed = reverseXD(reverseXD(seed));
+                        if (natureList == null || natureList.Contains(nature))
+                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
+
+                        pid ^= 0x80008000;
+                        nature = pid % 25;
+                        if (natureList == null || natureList.Contains(nature))
+                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
+                    }
+                }
+            }*/
         }
 
         private void filterSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint pid, uint nature, uint seed)
@@ -1422,14 +1531,13 @@ namespace GameCubeRNG
         {
             uint x4 = hp | (atk << 5) | (def << 10);
             uint ex4 = spe | (spa << 5) | (spd << 10);
-            uint ex4_2 = ex4 ^ 0x8000;
             uint ivs_1b = x4 << 16;
 
             for (uint cnt = 0; cnt <= 0xFFFF; cnt++)
             {
                 uint seedb = ivs_1b | cnt;
                 uint ivs_2 = forward(seedb) >> 16;
-                if (ivs_2 == ex4 || ivs_2 == ex4_2)
+                if ((ivs_2 & 0x7FFF) == ex4)
                 {
                     uint pid2 = reverse(seedb);
                     uint pid1 = reverse(pid2);
@@ -1437,9 +1545,7 @@ namespace GameCubeRNG
                     uint nature = pid % 25;
                     uint seed = reverse(pid1);
                     if (natureList == null || natureList.Contains(nature))
-                    {
                         filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
-                    }
 
                     pid ^= 0x80008000;
                     nature = pid % 25;
@@ -1447,6 +1553,112 @@ namespace GameCubeRNG
                         filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
                 }
             }
+
+            /*uint x_test = spe | (spa << 5) | (spd << 10);
+            uint y_test = hp | (atk << 5) | (def << 10);
+            uint y_compare = (y_test - 0x31) & 0xFFFF;
+            uint x8 = x_test << 16;
+            uint seed;
+            uint rng1;
+
+            // Any possible test seed will have at most
+            // a difference of 0x31 from the target seed.
+            // If it's close enough, we can then modify it
+            // to match.
+            if (y_test < 0x31)
+            {
+                for (uint cnt = 0xFFFF; cnt > 0xF2CC; cnt--)
+                {
+                    seed = x8 | cnt;
+
+                    // Do a quick search for matching seeds
+                    // with a lower 16-bits between 0xFFFF and 0xF2CD.
+                    // We'll take the closest matches and subtract 0xD33
+                    // until it produces the correct seed (or doesn't).
+
+                    // Best we can do until we find a way to
+                    // calculate them directly.
+
+                    rng1 = reverse(seed) >> 16;
+
+                    // We don't have to worry about unsigned overflow
+                    // because y_test is never more than 0x7FFF
+                    if (rng1 <= y_compare)
+                    {
+                        rng1 &= 0x7FFF;
+                        while ((seed & 0xFFFF) > 0xD32 && rng1 > y_test)
+                        {
+                            seed = seed - 0xD33;
+                            rng1 = (reverse(seed) >> 16) & 0x7FFF;
+                        }
+                    }
+                    else
+                        rng1 &= 0x7FFF;
+
+                    if (rng1 == y_test)
+                    {
+                        uint pid2 = reverse(reverse(seed));
+                        uint pid1 = reverse(pid2);
+                        uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                        uint nature = pid % 25;
+                        seed = reverse(pid1);
+                        if (natureList == null || natureList.Contains(nature))
+                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
+
+                        pid ^= 0x80008000;
+                        nature = pid % 25;
+                        if (natureList == null || natureList.Contains(nature))
+                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
+                    }
+                }
+            }
+            else
+            {
+                for (uint cnt = 0xFFFF; cnt > 0xF2CC; cnt--)
+                {
+                    seed = x8 | cnt;
+
+                    // Do a quick search for matching seeds
+                    // with a lower 16-bits between 0xFFFF and 0xF2CD.
+                    // We'll take the closest matches and subtract 0xD33
+                    // until it produces the correct seed (or doesn't).
+
+                    // Best we can do until we find a way to
+                    // calculate them directly.
+
+                    rng1 = reverse(seed) >> 16;
+
+                    // We don't have to worry about unsigned overflow
+                    // because y_test is never more than 0x7FFF
+                    if (rng1 >= y_compare)
+                    {
+                        rng1 &= 0x7FFF;
+                        while ((seed & 0xFFFF) > 0xD32 && rng1 < y_test)
+                        {
+                            seed = seed - 0xD33;
+                            rng1 = (reverse(seed) >> 16) & 0x7FFF;
+                        }
+                    }
+                    else
+                        rng1 &= 0x7FFF;
+
+                    if (rng1 == y_test)
+                    {
+                        uint pid2 = reverse(reverse(seed));
+                        uint pid1 = reverse(pid2);
+                        uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                        uint nature = pid % 25;
+                        seed = reverse(pid1);
+                        if (natureList == null || natureList.Contains(nature))
+                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
+
+                        pid ^= 0x80008000;
+                        nature = pid % 25;
+                        if (natureList == null || natureList.Contains(nature))
+                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
+                    }
+                }
+            }*/
         }
         #endregion
 
