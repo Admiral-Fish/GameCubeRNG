@@ -110,7 +110,7 @@ namespace GameCubeRNG.Objects
                     return new LockInfo[] { new LockInfo(18, 0, 126), new LockInfo(6, 0, 126), new LockInfo(24, 127, 255) };
                 case 26: //Hitmonlee
                     type = ShadowType.FirstShadow;
-                    return new LockInfo[] { new LockInfo(24, 0, 126), new LockInfo(6, 0, 255), new LockInfo(12, 0, 126), new LockInfo(18, 127, 255) };
+                    return new LockInfo[] { new LockInfo(24, 0, 62), new LockInfo(6, 0, 255), new LockInfo(12, 0, 126), new LockInfo(18, 127, 255) };
                 case 30: //Hypno
                     type = ShadowType.SecondShadow;
                     return new LockInfo[] { new LockInfo(24, 127, 255), new LockInfo(6, 0, 126), new LockInfo(12, 0, 126), new LockInfo(18, 0, 126) };
@@ -179,7 +179,7 @@ namespace GameCubeRNG.Objects
                     return new LockInfo[] { new LockInfo(6, 0, 126), new LockInfo(24, 127, 255) };
                 case 55: //Pidgeotto
                     type = ShadowType.FirstShadow;
-                    return new LockInfo[] { new LockInfo(18, 32, 255), new LockInfo(12, 127, 255) };
+                    return new LockInfo[] { new LockInfo(18, 31, 255), new LockInfo(12, 127, 255) };
                 case 56: //Pineco
                     type = ShadowType.SingleLock;
                     return new LockInfo[] { new LockInfo(6, 127, 255) };
@@ -216,6 +216,9 @@ namespace GameCubeRNG.Objects
                 case 68: //Scyther
                     type = ShadowType.FirstShadow;
                     return new LockInfo[] { new LockInfo(24, 127, 255), new LockInfo(6, 0, 126) };
+                case 69: //Seedot 3
+                    type = ShadowType.FirstShadow;
+                    return new LockInfo[] { new LockInfo(12, 127, 255), new LockInfo(0, 127, 255), new LockInfo(0, 0, 126), new LockInfo(24, 0, 126), new LockInfo(6, 127, 255) };
                 case 70: //Seedot 1
                     type = ShadowType.FirstShadow;
                     return new LockInfo[] { new LockInfo(12, 127, 255), new LockInfo(0, 127, 255), new LockInfo(18, 0, 126), new LockInfo(24, 0, 126), new LockInfo(6, 127, 255) };
@@ -227,7 +230,7 @@ namespace GameCubeRNG.Objects
                     return new LockInfo[] { new LockInfo(18, 0, 126), new LockInfo(18, 127, 255), new LockInfo(6, 127, 255) };
                 case 74: //Shroomish
                     type = ShadowType.FirstShadow;
-                    return new LockInfo[] { new LockInfo(0, 0, 126), new LockInfo(24, 0, 126) };
+                    return new LockInfo[] { new LockInfo(0, 0, 126), new LockInfo(24, 0, 190) };
                 case 75: //Snorlax
                     type = ShadowType.SecondShadow;
                     return new LockInfo[] { new LockInfo(18, 0, 126), new LockInfo(6, 0, 126), new LockInfo(24, 63, 255) };
@@ -263,16 +266,16 @@ namespace GameCubeRNG.Objects
                     return new LockInfo[] { new LockInfo(0, 0, 126), new LockInfo(6, 127, 255), new LockInfo(12, 0, 190) };
                 case 90: //Venomoth
                     type = ShadowType.FirstShadow;
-                    return new LockInfo[] { new LockInfo(12, 127, 255), new LockInfo(24, 0, 255), new LockInfo(18, 0, 126) };
+                    return new LockInfo[] { new LockInfo(12, 63, 255), new LockInfo(24, 0, 255), new LockInfo(18, 0, 126) };
                 case 91: //Voltorb
                     type = ShadowType.FirstShadow;
-                    return new LockInfo[] { new LockInfo(12, 0, 126), new LockInfo(12, 127, 255), new LockInfo(0, 127, 255) };
+                    return new LockInfo[] { new LockInfo(12, 0, 126), new LockInfo(18, 127, 255), new LockInfo(0, 127, 255) };
                 case 92: //Vulpix
                     type = ShadowType.FirstShadow;
                     return new LockInfo[] { new LockInfo(18, 127, 255), new LockInfo(6, 0, 126), new LockInfo(0, 127, 255) };
                 case 93: //Weepinbell
                     type = ShadowType.SecondShadow;
-                    return new LockInfo[] { new LockInfo(12, 127, 255), new LockInfo(24, 0, 255), new LockInfo(18, 0, 126) };
+                    return new LockInfo[] { new LockInfo(12, 63, 255), new LockInfo(24, 0, 255), new LockInfo(18, 0, 126) };
                 case 2: //Articuno 
                 case 3: //Baltoy 3
                 case 4: //Baltoy 1
@@ -281,12 +284,11 @@ namespace GameCubeRNG.Objects
                 case 17: //Exeggutor
                 case 27: //Houndour 3
                 case 28: //Houndour 1
-                case 29: //To do houndour 2
+                case 29: //Houndour 2
                 case 35: //Lugia
                 case 43: //Mareep 3
                 case 49: //Moltres
                 case 64: //Rhydon
-                case 69: //To do seedot 3
                 case 73: //Shellder
                 case 84: //Swellow
                 case 87: //Tauros
