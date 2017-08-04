@@ -20,11 +20,13 @@ namespace GameCubeRNG
         private List<DisplayList> displayList;
         private List<ShadowDisplay> shadowDisplay;
         private bool isSearching, galesFlag;
-        private uint searchNumber, genderFilter, abilityFilter;
+        private uint searchNumber, genderFilter, abilityFilter, k1, k2;
         private ShadowType shadow;
         private NatureLock natureLock = new NatureLock(0);
         private List<uint> natureList, seedList, hiddenPowerList;
         private uint[] ivsLower, ivsUpper, shinyval;
+        private byte[] low8;
+        private bool[] flags;
         private int natureLockIndex, cores;
 
         public GameCube()
@@ -279,157 +281,184 @@ namespace GameCubeRNG
 
         private void checkSeedGales(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
-            uint x8 = hp | (atk << 5) | (def << 10);
-            uint ex8 = spe | (spa << 5) | (spd << 10);
-            uint ivs_1b = x8 << 16;
-            uint ivs_2, seedb, pid1, pid2, pid, nature, galesSeed, xorSeed, xorPID, xorNature, cnt;
+            long first = hp | (atk << 5) | (def << 10);
+            long second = spe | (spa << 5) | (spd << 10);
+            long fullFirst;
+            uint fullSecond;
+
+            long t = second << 16;
+            t = t - 0x343fd0000 * first;
+            t = t - 0x259ec4;
+            t = (t % 0x80000000) + 0x80000000;
+            long k = (0x343fabc02 + t) / 0x80000000;
+            long test = t;
+            first <<= 16;
+            second <<= 16;
+
+            uint pid1, pid2, pid, nature, galesSeed, xorSeed, xorPID, xorNature;
+            long cnt;
             bool pass, xorPass;
 
             switch (shadow)
             {
                 case ShadowType.NoLock:
-                    for (cnt = 0; cnt <= 0xFFFF; cnt++)
+                    for (cnt = 0; cnt < k; cnt++, test += 0x80000000)
                     {
-                        seedb = ivs_1b | cnt;
-                        ivs_2 = forwardXD(seedb);
-                        if (((ivs_2 >> 16) & 0x7FFF) == ex8)
+                        if ((test % 0x343fd) < 0x10000)
                         {
-                            pid1 = forwardXD(forwardXD(ivs_2));
-                            pid2 = forwardXD(pid1);
-                            pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                            nature = pid % 25;
-                            galesSeed = reverseXD(seedb);
-                            pass = (natureList == null || natureList.Contains(nature));
+                            fullFirst = first | (test / 0x343fd);
+                            fullSecond = forwardXD((uint)fullFirst);
+                            if ((fullSecond & 0x7FFF0000) == second)
+                            {
+                                pid1 = forwardXD(forwardXD(fullSecond));
+                                pid2 = forwardXD(pid1);
+                                pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                                nature = pid % 25;
+                                galesSeed = reverseXD((uint)fullFirst);
+                                pass = (natureList == null || natureList.Contains(nature));
 
-                            xorSeed = galesSeed ^ 0x80000000;
-                            xorPID = pid ^ 0x80008000;
-                            xorNature = xorPID % 25;
-                            xorPass = (natureList == null || natureList.Contains(xorNature));
+                                xorSeed = galesSeed ^ 0x80000000;
+                                xorPID = pid ^ 0x80008000;
+                                xorNature = xorPID % 25;
+                                xorPass = (natureList == null || natureList.Contains(xorNature));
 
-                            if (pass)
-                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 0);
-                            if (xorPass)
-                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
+                                if (pass)
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 0);
+                                if (xorPass)
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
+                            }
                         }
                     }
                     break;
                 case ShadowType.FirstShadow:
-                    for (cnt = 0; cnt <= 0xFFFF; cnt++)
+                    for (cnt = 0; cnt < k; cnt++, test += 0x80000000)
                     {
-                        seedb = ivs_1b | cnt;
-                        ivs_2 = forwardXD(seedb);
-                        if (((ivs_2 >> 16) & 0x7FFF) == ex8)
+                        if ((test % 0x343fd) < 0x10000)
                         {
-                            pid1 = forwardXD(forwardXD(ivs_2));
-                            pid2 = forwardXD(pid1);
-                            pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                            nature = pid % 25;
-                            galesSeed = reverseXD(seedb);
-                            pass = (natureList == null || natureList.Contains(nature));
+                            fullFirst = first | (test / 0x343fd);
+                            fullSecond = forwardXD((uint)fullFirst);
+                            if ((fullSecond & 0x7FFF0000) == second)
+                            {
+                                pid1 = forwardXD(forwardXD(fullSecond));
+                                pid2 = forwardXD(pid1);
+                                pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                                nature = pid % 25;
+                                galesSeed = reverseXD((uint)fullFirst);
+                                pass = (natureList == null || natureList.Contains(nature));
 
-                            xorSeed = galesSeed ^ 0x80000000;
-                            xorPID = pid ^ 0x80008000;
-                            xorNature = xorPID % 25;
-                            xorPass = (natureList == null || natureList.Contains(xorNature));
+                                xorSeed = galesSeed ^ 0x80000000;
+                                xorPID = pid ^ 0x80008000;
+                                xorNature = xorPID % 25;
+                                xorPass = (natureList == null || natureList.Contains(xorNature));
 
-                            if (pass && natureLock.method1FirstShadow(galesSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 0);
-                            else if (xorPass && natureLock.method1FirstShadow(xorSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
+                                if (pass && natureLock.method1FirstShadow(galesSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 0);
+                                else if (xorPass && natureLock.method1FirstShadow(xorSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
+                            }
                         }
                     }
                     break;
                 case ShadowType.SingleLock:
-                    for (cnt = 0; cnt <= 0xFFFF; cnt++)
+                    for (cnt = 0; cnt < k; cnt++, test += 0x80000000)
                     {
-                        seedb = ivs_1b | cnt;
-                        ivs_2 = forwardXD(seedb);
-                        if (((ivs_2 >> 16) & 0x7FFF) == ex8)
+                        if ((test % 0x343fd) < 0x10000)
                         {
-                            pid1 = forwardXD(forwardXD(ivs_2));
-                            pid2 = forwardXD(pid1);
-                            pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                            nature = pid % 25;
-                            galesSeed = reverseXD(seedb);
-                            pass = (natureList == null || natureList.Contains(nature));
+                            fullFirst = first | (test / 0x343fd);
+                            fullSecond = forwardXD((uint)fullFirst);
+                            if ((fullSecond & 0x7FFF0000) == second)
+                            {
+                                pid1 = forwardXD(forwardXD(fullSecond));
+                                pid2 = forwardXD(pid1);
+                                pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                                nature = pid % 25;
+                                galesSeed = reverseXD((uint)fullFirst);
+                                pass = (natureList == null || natureList.Contains(nature));
 
-                            xorSeed = galesSeed ^ 0x80000000;
-                            xorPID = pid ^ 0x80008000;
-                            xorNature = xorPID % 25;
-                            xorPass = (natureList == null || natureList.Contains(xorNature));
+                                xorSeed = galesSeed ^ 0x80000000;
+                                xorPID = pid ^ 0x80008000;
+                                xorNature = xorPID % 25;
+                                xorPass = (natureList == null || natureList.Contains(xorNature));
 
-                            if (pass && natureLock.method1SingleNL(galesSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 0);
-                            else if (xorPass && natureLock.method1SingleNL(xorSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
+                                if (pass && natureLock.method1SingleNL(galesSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 0);
+                                else if (xorPass && natureLock.method1SingleNL(xorSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
+                            }
                         }
                     }
                     break;
                 case ShadowType.Salamence:
-                    for (cnt = 0; cnt <= 0xFFFF; cnt++)
+                    for (cnt = 0; cnt < k; cnt++, test += 0x80000000)
                     {
-                        seedb = ivs_1b | cnt;
-                        ivs_2 = forwardXD(seedb);
-                        if (((ivs_2 >> 16) & 0x7FFF) == ex8)
+                        if ((test % 0x343fd) < 0x10000)
                         {
-                            pid1 = forwardXD(forwardXD(ivs_2));
-                            pid2 = forwardXD(pid1);
-                            pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                            nature = pid % 25;
-                            galesSeed = reverseXD(seedb);
-                            pass = (natureList == null || natureList.Contains(nature));
+                            fullFirst = first | (test / 0x343fd);
+                            fullSecond = forwardXD((uint)fullFirst);
+                            if ((fullSecond & 0x7FFF0000) == second)
+                            {
+                                pid1 = forwardXD(forwardXD(fullSecond));
+                                pid2 = forwardXD(pid1);
+                                pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                                nature = pid % 25;
+                                galesSeed = reverseXD((uint)fullFirst);
+                                pass = (natureList == null || natureList.Contains(nature));
 
-                            xorSeed = galesSeed ^ 0x80000000;
-                            xorPID = pid ^ 0x80008000;
-                            xorNature = xorPID % 25;
-                            xorPass = (natureList == null || natureList.Contains(xorNature));
+                                xorSeed = galesSeed ^ 0x80000000;
+                                xorPID = pid ^ 0x80008000;
+                                xorNature = xorPID % 25;
+                                xorPass = (natureList == null || natureList.Contains(xorNature));
 
-                            if (pass && natureLock.salamenceSet(galesSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 1);
-                            else if (xorPass && natureLock.salamenceSet(xorSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 1);
-                            else if (pass && natureLock.salamenceUnset(galesSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 2);
-                            else if (xorPass && natureLock.salamenceUnset(xorSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 2);
-                            else if (pass && natureLock.salamenceShinySkip(galesSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 3);
-                            else if (xorPass && natureLock.salamenceShinySkip(xorSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 3);
+                                if (pass && natureLock.salamenceSet(galesSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 1);
+                                else if (xorPass && natureLock.salamenceSet(xorSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 1);
+                                else if (pass && natureLock.salamenceUnset(galesSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 2);
+                                else if (xorPass && natureLock.salamenceUnset(xorSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 2);
+                                else if (pass && natureLock.salamenceShinySkip(galesSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 3);
+                                else if (xorPass && natureLock.salamenceShinySkip(xorSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 3);
+                            }
                         }
                     }
                     break;
                 case ShadowType.SecondShadow:
-                    for (cnt = 0; cnt <= 0xFFFF; cnt++)
+                    for (cnt = 0; cnt < k; cnt++, test += 0x80000000)
                     {
-                        seedb = ivs_1b | cnt;
-                        ivs_2 = forwardXD(seedb);
-                        if (((ivs_2 >> 16) & 0x7FFF) == ex8)
+                        if ((test % 0x343fd) < 0x10000)
                         {
-                            pid1 = forwardXD(forwardXD(ivs_2));
-                            pid2 = forwardXD(pid1);
-                            pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                            nature = pid % 25;
-                            galesSeed = reverseXD(seedb);
-                            pass = (natureList == null || natureList.Contains(nature));
+                            fullFirst = first | (test / 0x343fd);
+                            fullSecond = forwardXD((uint)fullFirst);
+                            if ((fullSecond & 0x7FFF0000) == second)
+                            {
+                                pid1 = forwardXD(forwardXD(fullSecond));
+                                pid2 = forwardXD(pid1);
+                                pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
+                                nature = pid % 25;
+                                galesSeed = reverseXD((uint)fullFirst);
+                                pass = (natureList == null || natureList.Contains(nature));
 
-                            xorSeed = galesSeed ^ 0x80000000;
-                            xorPID = pid ^ 0x80008000;
-                            xorNature = xorPID % 25;
-                            xorPass = (natureList == null || natureList.Contains(xorNature));
+                                xorSeed = galesSeed ^ 0x80000000;
+                                xorPID = pid ^ 0x80008000;
+                                xorNature = xorPID % 25;
+                                xorPass = (natureList == null || natureList.Contains(xorNature));
 
-                            if (pass && natureLock.method1SecondShadowSet(galesSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 1);
-                            else if (xorPass && natureLock.method1SecondShadowSet(xorSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 1);
-                            else if (pass && natureLock.method1SecondShadowUnset(galesSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 2);
-                            else if (xorPass && natureLock.method1SecondShadowUnset(xorSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 2);
-                            else if (pass && natureLock.method1SecondShadowShinySkip(galesSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 3);
-                            else if (xorPass && natureLock.method1SecondShadowShinySkip(xorSeed))
-                                filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 3);
+                                if (pass && natureLock.method1SecondShadowSet(galesSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 1);
+                                else if (xorPass && natureLock.method1SecondShadowSet(xorSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 1);
+                                else if (pass && natureLock.method1SecondShadowUnset(galesSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 2);
+                                else if (xorPass && natureLock.method1SecondShadowUnset(xorSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 2);
+                                else if (pass && natureLock.method1SecondShadowShinySkip(galesSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, pid, nature, galesSeed, 3);
+                                else if (xorPass && natureLock.method1SecondShadowShinySkip(xorSeed))
+                                    filterSeedGales(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 3);
+                            }
                         }
                     }
                     break;
@@ -888,80 +917,33 @@ namespace GameCubeRNG
 
         private void checkSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
-            uint x8 = hp | (atk << 5) | (def << 10);
-            uint ex8 = spe | (spa << 5) | (spd << 10);
-            uint ivs_1b = x8 << 16;
+            long first = hp | (atk << 5) | (def << 10);
+            long second = spe | (spa << 5) | (spd << 10);
+            long fullFirst;
+            uint fullSecond;
 
-            for (uint cnt = 0; cnt <= 0xFFFF; cnt++)
+            long t = second << 16;
+            t = t - 0x343fd0000 * first;
+            t = t - 0x259ec4;
+            t = (t % 0x80000000) + 0x80000000;
+            long k = (0x343fabc02 + t) / 0x80000000;
+            long test = t;
+            first <<= 16;
+            second <<= 16;
+
+            for (long cnt = 0; cnt < k; cnt++, test += 0x80000000)
             {
-                uint seedb = ivs_1b | cnt;
-                uint ivs_2 = forwardXD(seedb);
-                if (((ivs_2 >> 16) & 0x7FFF) == ex8)
+                if ((test % 0x343fd) < 0x10000)
                 {
-                    uint pid1 = forwardXD(forwardXD(ivs_2));
-                    uint pid2 = forwardXD(pid1);
-                    uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                    uint nature = pid % 25;
-                    uint seed = reverseXD(seedb);
-                    if (natureList == null || natureList.Contains(nature))
-                        filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
-
-                    pid ^= 0x80008000;
-                    nature = pid % 25;
-                    if (natureList == null || natureList.Contains(nature))
-                        filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
-                }
-
-            }
-
-            /*uint x_test = spe | (spa << 5) | (spd << 10);
-            uint y_test = hp | (atk << 5) | (def << 10);
-            uint y_compare = (y_test - 0x31) & 0xFFFF;
-            uint x8 = x_test << 16;
-            uint seed;
-            uint rng1;
-
-            // Any possible test seed will have at most
-            // a difference of 0x31 from the target seed.
-            // If it's close enough, we can then modify it
-            // to match.
-            if (y_test < 0x31)
-            {
-                for (uint cnt = 0xFFFF; cnt > 0xF2CC; cnt--)
-                {
-                    seed = x8 | cnt;
-
-                    // Do a quick search for matching seeds
-                    // with a lower 16-bits between 0xFFFF and 0xF2CD.
-                    // We'll take the closest matches and subtract 0xD33
-                    // until it produces the correct seed (or doesn't).
-
-                    // Best we can do until we find a way to
-                    // calculate them directly.
-
-                    rng1 = (reverseXD(seed) >> 16);
-
-                    // We don't have to worry about unsigned overflow
-                    // because y_test is never more than 0x7FFF
-                    if (rng1 <= y_compare)
+                    fullFirst = first | (test / 0x343fd);
+                    fullSecond = forwardXD((uint)fullFirst);
+                    if ((fullSecond & 0x7FFF0000) == second)
                     {
-                        rng1 &= 0x7FFF;
-                        while ((seed & 0xFFFF) > 0xD32 && rng1 > y_test)
-                        {
-                            seed = seed - 0xD33;
-                            rng1 = (reverseXD(seed) >> 16) & 0x7FFF;
-                        }
-                    }
-                    else
-                        rng1 &= 0x7FFF;
-
-                    if (rng1 == y_test)
-                    {
-                        uint pid1 = forwardXD(forwardXD(seed));
+                        uint pid1 = forwardXD(forwardXD(fullSecond));
                         uint pid2 = forwardXD(pid1);
                         uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
                         uint nature = pid % 25;
-                        seed = reverseXD(reverseXD(seed));
+                        uint seed = reverseXD((uint)fullFirst);
                         if (natureList == null || natureList.Contains(nature))
                             filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
 
@@ -972,53 +954,6 @@ namespace GameCubeRNG
                     }
                 }
             }
-            else
-            {
-                for (uint cnt = 0xFFFF; cnt > 0xF2CC; cnt--)
-                {
-                    seed = x8 | cnt;
-
-                    // Do a quick search for matching seeds
-                    // with a lower 16-bits between 0xFFFF and 0xF2CD.
-                    // We'll take the closest matches and subtract 0xD33
-                    // until it produces the correct seed (or doesn't).
-
-                    // Best we can do until we find a way to
-                    // calculate them directly.
-
-                    rng1 = (reverseXD(seed) >> 16) & 0x7FFF;
-
-                    // We don't have to worry about unsigned overflow
-                    // because y_test is never more than 0x7FFF
-                    if (rng1 >= y_compare)
-                    {
-                        rng1 &= 0x7FFF;
-                        while ((seed & 0xFFFF) > 0xD32 && rng1 < y_test)
-                        {
-                            seed = seed - 0xD33;
-                            rng1 = (reverseXD(seed) >> 16) & 0x7FFF;
-                        }
-                    }
-                    else
-                        rng1 &= 0x7FFF;
-
-                    if (rng1 == y_test)
-                    {
-                        uint pid1 = forwardXD(forwardXD(seed));
-                        uint pid2 = forwardXD(pid1);
-                        uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                        uint nature = pid % 25;
-                        seed = reverseXD(reverseXD(seed));
-                        if (natureList == null || natureList.Contains(nature))
-                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
-
-                        pid ^= 0x80008000;
-                        nature = pid % 25;
-                        if (natureList == null || natureList.Contains(nature))
-                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
-                    }
-                }
-            }*/
         }
 
         private void filterSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint pid, uint nature, uint seed)
@@ -1511,6 +1446,21 @@ namespace GameCubeRNG
         #region Search 1
         private void generateR()
         {
+            k2 = 0xc64e6d00;
+            low8 = new byte[0x10000];
+            flags = new bool[0x10000];
+
+            for (uint i = 0; i < 256; i++)
+            {
+                uint right = 0x41c64e6d * i + 0x6073;
+                ushort val = (ushort)(right >> 16);
+                flags[val] = true;
+                low8[val] = (byte)i;
+                --val;
+                flags[val] = true;
+                low8[val] = (byte)i;
+            }
+
             for (uint a = ivsLower[0]; a <= ivsUpper[0]; a++)
                 for (uint b = ivsLower[1]; b <= ivsUpper[1]; b++)
                     for (uint c = ivsLower[2]; c <= ivsUpper[2]; c++)
@@ -1529,79 +1479,28 @@ namespace GameCubeRNG
 
         private void checkSeedR(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
-            uint x4 = hp | (atk << 5) | (def << 10);
-            uint ex4 = spe | (spa << 5) | (spd << 10);
-            uint ivs_1b = x4 << 16;
+            uint first = (hp | (atk << 5) | (def << 10)) << 16;
+            uint second = (spe | (spa << 5) | (spd << 10)) << 16;
+            checkSeedR(hp, atk, def, spa, spd, spe, first, second);
+            checkSeedR(hp, atk, def, spa, spd, spe, first ^ 0x80000000, second);
+        }
 
-            for (uint cnt = 0; cnt <= 0xFFFF; cnt++)
+        private void checkSeedR(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint first, uint second)
+        {
+            k1 = second - first * 0x41c64e6d;
+            for (uint cnt = 0; cnt < 256; ++cnt, k1 -= k2)
             {
-                uint seedb = ivs_1b | cnt;
-                uint ivs_2 = forward(seedb) >> 16;
-                if ((ivs_2 & 0x7FFF) == ex4)
+                uint test = k1 >> 16;
+                if (flags[test])
                 {
-                    uint pid2 = reverse(seedb);
-                    uint pid1 = reverse(pid2);
-                    uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                    uint nature = pid % 25;
-                    uint seed = reverse(pid1);
-                    if (natureList == null || natureList.Contains(nature))
-                        filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
-
-                    pid ^= 0x80008000;
-                    nature = pid % 25;
-                    if (natureList == null || natureList.Contains(nature))
-                        filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
-                }
-            }
-
-            /*uint x_test = spe | (spa << 5) | (spd << 10);
-            uint y_test = hp | (atk << 5) | (def << 10);
-            uint y_compare = (y_test - 0x31) & 0xFFFF;
-            uint x8 = x_test << 16;
-            uint seed;
-            uint rng1;
-
-            // Any possible test seed will have at most
-            // a difference of 0x31 from the target seed.
-            // If it's close enough, we can then modify it
-            // to match.
-            if (y_test < 0x31)
-            {
-                for (uint cnt = 0xFFFF; cnt > 0xF2CC; cnt--)
-                {
-                    seed = x8 | cnt;
-
-                    // Do a quick search for matching seeds
-                    // with a lower 16-bits between 0xFFFF and 0xF2CD.
-                    // We'll take the closest matches and subtract 0xD33
-                    // until it produces the correct seed (or doesn't).
-
-                    // Best we can do until we find a way to
-                    // calculate them directly.
-
-                    rng1 = reverse(seed) >> 16;
-
-                    // We don't have to worry about unsigned overflow
-                    // because y_test is never more than 0x7FFF
-                    if (rng1 <= y_compare)
+                    uint fullFirst = (first | (cnt << 8) | low8[test]);
+                    if ((forward(fullFirst) & 0x7FFF0000) == second)
                     {
-                        rng1 &= 0x7FFF;
-                        while ((seed & 0xFFFF) > 0xD32 && rng1 > y_test)
-                        {
-                            seed = seed - 0xD33;
-                            rng1 = (reverse(seed) >> 16) & 0x7FFF;
-                        }
-                    }
-                    else
-                        rng1 &= 0x7FFF;
-
-                    if (rng1 == y_test)
-                    {
-                        uint pid2 = reverse(reverse(seed));
+                        uint pid2 = reverse(fullFirst);
                         uint pid1 = reverse(pid2);
                         uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
                         uint nature = pid % 25;
-                        seed = reverse(pid1);
+                        uint seed = reverse(pid1);
                         if (natureList == null || natureList.Contains(nature))
                             filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
 
@@ -1612,53 +1511,6 @@ namespace GameCubeRNG
                     }
                 }
             }
-            else
-            {
-                for (uint cnt = 0xFFFF; cnt > 0xF2CC; cnt--)
-                {
-                    seed = x8 | cnt;
-
-                    // Do a quick search for matching seeds
-                    // with a lower 16-bits between 0xFFFF and 0xF2CD.
-                    // We'll take the closest matches and subtract 0xD33
-                    // until it produces the correct seed (or doesn't).
-
-                    // Best we can do until we find a way to
-                    // calculate them directly.
-
-                    rng1 = reverse(seed) >> 16;
-
-                    // We don't have to worry about unsigned overflow
-                    // because y_test is never more than 0x7FFF
-                    if (rng1 >= y_compare)
-                    {
-                        rng1 &= 0x7FFF;
-                        while ((seed & 0xFFFF) > 0xD32 && rng1 < y_test)
-                        {
-                            seed = seed - 0xD33;
-                            rng1 = (reverse(seed) >> 16) & 0x7FFF;
-                        }
-                    }
-                    else
-                        rng1 &= 0x7FFF;
-
-                    if (rng1 == y_test)
-                    {
-                        uint pid2 = reverse(reverse(seed));
-                        uint pid1 = reverse(pid2);
-                        uint pid = (pid1 & 0xFFFF0000) | (pid2 >> 16);
-                        uint nature = pid % 25;
-                        seed = reverse(pid1);
-                        if (natureList == null || natureList.Contains(nature))
-                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed);
-
-                        pid ^= 0x80008000;
-                        nature = pid % 25;
-                        if (natureList == null || natureList.Contains(nature))
-                            filterSeed(hp, atk, def, spa, spd, spe, pid, nature, seed ^ 0x80000000);
-                    }
-                }
-            }*/
         }
         #endregion
 
