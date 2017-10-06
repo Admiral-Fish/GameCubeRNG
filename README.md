@@ -5,7 +5,7 @@
 See https://github.com/Admiral-Fish/RNGReporter for the most up to date version of GameCubeRNG
 
 # Credits
-Original RNGReporter dev team for the RNGReporter functions used
+Original RNGReporter dev team(mingot, slashmolder, omegadonut) for the RNGReporter functions used
 
 Credits to amab for all the Channel Jirachi logic 
 
