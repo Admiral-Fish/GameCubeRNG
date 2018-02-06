@@ -7,9 +7,9 @@ namespace GameCubeRNG.Objects
 {
     public class DisplayList
     {
-        public String Seed { get; set; }
+        public uint Seed { get; set; }
 
-        public String PID { get; set; }
+        public uint PID { get; set; }
 
         public String Shiny { get; set; }
 
@@ -48,7 +48,7 @@ namespace GameCubeRNG.Objects
     {
         public int Frame { get; set; }
 
-        public String PID { get; set; }
+        public uint PID { get; set; }
 
         public String Nature { get; set; }
 
@@ -95,12 +95,10 @@ namespace GameCubeRNG.Objects
             switch (CompareType)
             {
                 case "Seed":
-                    uint seedX = uint.Parse(x.Seed, NumberStyles.HexNumber);
-                    uint seedY = uint.Parse(y.Seed, NumberStyles.HexNumber);
-                    result = direction * seedX.CompareTo(seedY);
+                    result = direction * x.Seed.CompareTo(y.Seed);
                     return result;
                 case "PID":
-                    return direction * uint.Parse(x.PID, NumberStyles.HexNumber).CompareTo(uint.Parse(y.PID, NumberStyles.HexNumber));
+                    return direction * x.PID.CompareTo(y.PID);
                 case "Nature":
                     return direction * Functions.NatureNumber(x.Nature).CompareTo(Functions.NatureNumber(y.Nature));
                 case "Ability":

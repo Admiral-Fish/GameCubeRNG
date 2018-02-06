@@ -32,6 +32,8 @@ namespace GameCubeRNG
         public GameCube()
         {
             InitializeComponent();
+            id.Text = "";
+            sid.Text = "";
             Reason.Visible = false;
             displayList = new List<DisplayList>();
             shadowDisplay = new List<ShadowDisplay>();
@@ -64,6 +66,9 @@ namespace GameCubeRNG
             dataGridViewResult.AutoGenerateColumns = false;
             dataGridShadow.DataSource = bindingShadow;
             dataGridShadow.AutoGenerateColumns = false;
+            dataGridViewResult.Columns[0].DefaultCellStyle.Format = "X8";
+            dataGridViewResult.Columns[1].DefaultCellStyle.Format = "X8";
+            dataGridShadow.Columns[1].DefaultCellStyle.Format = "X8";
             shinyval = new uint[8];
             cores = Environment.ProcessorCount;
             while (cores != 1 && cores != 2 && cores != 4 && cores != 8)
@@ -619,48 +624,12 @@ namespace GameCubeRNG
                     xorNature = xorPID % 25;
                     xorPass = (natureList == null || natureList.Contains(xorNature));
 
-                    switch (shadow)
-                    {
-                        case ShadowType.Celebi:
-                            uint celebiPID = getCelebiPID(pid1, pid2);
-                            if (celebiPID != pid)
-                            {
-                                uint celebiNature = celebiPID % 25;
-                                if (natureList == null || natureList.Contains(celebiNature))
-                                    filterSeedCelebi(hp, atk, def, spa, spd, spe, celebiPID, celebiNature, seed, 0);
-                                celebiPID ^= 0x80008000;
-                                celebiNature = celebiPID % 25;
-                                if (natureList == null || natureList.Contains(celebiNature))
-                                    filterSeedCelebi(hp, atk, def, spa, spd, spe, celebiPID, celebiNature, xorSeed, 0);
-                            }
-                            else
-                            {
-                                if (pass)
-                                    filterSeedCelebi(hp, atk, def, spa, spd, spe, pid, nature, seed, 0);
-                                if (xorPass)
-                                    filterSeedCelebi(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
-                            }
-                            break;
-                        case ShadowType.FirstShadow:
-                            if (pass && natureLock.firstShadow(seed))
-                                filterSeedColo(hp, atk, def, spa, spd, spe, pid, nature, seed, 0);
-                            else if (xorPass && natureLock.firstShadow(xorSeed))
-                                filterSeedColo(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
-                            break;
-                    }
+                    if (pass && natureLock.firstShadow(seed))
+                        filterSeedColo(hp, atk, def, spa, spd, spe, pid, nature, seed, 0);
+                    else if (xorPass && natureLock.firstShadow(xorSeed))
+                        filterSeedColo(hp, atk, def, spa, spd, spe, xorPID, xorNature, xorSeed, 0);
                 }
             }
-        }
-
-        private uint getCelebiPID(uint pid1, uint pid2)
-        {
-            while ((((pid1 >> 16) ^ (pid2 >> 16)) >> 3) == 3890)
-            {
-                pid1 = forwardXD(pid2);
-                pid2 = forwardXD(pid1);
-            }
-
-            return (pid1 & 0xFFFF0000) | (pid2 >> 16);
         }
 
         private void filterSeedColo(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint pid, uint nature, uint seed, int num)
@@ -719,55 +688,6 @@ namespace GameCubeRNG
             }
             addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, shiny, seed, "Pass NL", 0);
         }
-
-        private void filterSeedCelebi(uint hp, uint atk, uint def, uint spa, uint spd, uint spe, uint pid, uint nature, uint seed, int num)
-        {
-            uint actualHP = calcHP(hp, atk, def, spa, spd, spe);
-            if (hiddenPowerList != null && !hiddenPowerList.Contains(actualHP))
-                return;
-
-            uint ability = pid & 1;
-            if (abilityFilter != 0 && (ability != (abilityFilter - 1)))
-                return;
-
-            uint gender = pid & 255;
-            switch (genderFilter)
-            {
-                case 1:
-                    if (gender < 127)
-                        return;
-                    break;
-                case 2:
-                    if (gender > 126)
-                        return;
-                    break;
-                case 3:
-                    if (gender < 191)
-                        return;
-                    break;
-                case 4:
-                    if (gender > 190)
-                        return;
-                    break;
-                case 5:
-                    if (gender < 64)
-                        return;
-                    break;
-                case 6:
-                    if (gender > 63)
-                        return;
-                    break;
-                case 7:
-                    if (gender < 31)
-                        return;
-                    break;
-                case 8:
-                    if (gender > 30)
-                        return;
-                    break;
-            }
-            addSeed(hp, atk, def, spa, spd, spe, nature, ability, gender, actualHP, pid, "", seed, "", 0);
-        }
         #endregion
 
         #region Gales/Colo search
@@ -798,18 +718,17 @@ namespace GameCubeRNG
 
         private void checkSeed(uint hp, uint atk, uint def, uint spa, uint spd, uint spe)
         {
-            long first = (hp | (atk << 5) | (def << 10)) << 16;
-            long second = (spe | (spa << 5) | (spd << 10)) << 16;
+            uint first = (hp | (atk << 5) | (def << 10)) << 16;
+            uint second = (spe | (spa << 5) | (spd << 10)) << 16;
             uint fullFirst;
 
-            long t = ((second - 0x343fd * first) - 0x259ec4) % 0x80000000;
-            t = t < 0 ? t + 0x80000000 : t;
-            long kmax = (0x343fabc02 - t) / 0x80000000;
+            uint t = ((second - 0x343fd * first) - 0x259ec4);
+            uint kmax = (uint)((0x343fabc02 - t) / 0x80000000);
             long test = t;
 
             uint pid, pid1, pid2, nature, seed;
 
-            for (long k = 0; k <= kmax; k++, test += 0x80000000)
+            for (uint k = 0; k <= kmax; k++, test += 0x80000000)
             {
                 if ((test % 0x343fd) < 0x10000)
                 {
@@ -996,14 +915,14 @@ namespace GameCubeRNG
         {
             uint first = hp << 27;
 
-            long t = (((spd << 27) - ((long)0x284A930D * first)) - 0x9A974C78) % 0x100000000;
-            t = t < 0 ? t + 0x100000000 : t;
-            long kmax = (0x142549847b56cf2 - t) / 0x100000000;
+            uint test = (((spd << 27) - (0x284A930D * first)) - 0x9A974C78);
+            uint kmax = (uint)((0x142549847b56cf2 - test) / 0x100000000);
+            long t = test;
 
             var rng = new XdRngR(0);
             uint temp, pid2, pid1, pid, sid, nature;
 
-            for (long k = 0; k <= kmax; k++, t += 0x100000000)
+            for (uint k = 0; k <= kmax; k++, t += 0x100000000)
             {
                 if ((t % 0x284A930D) >= 0x8000000)
                     continue;
@@ -1280,8 +1199,8 @@ namespace GameCubeRNG
         {
             displayList.Insert(0, new DisplayList
             {
-                Seed = seed.ToString("X"),
-                PID = pid.ToString("X"),
+                Seed = seed,
+                PID = pid,
                 Shiny = !shinyLock ? shiny == "" ? isShiny(pid, shinyIndex) ? "!!!" : "" : shiny : shiny,
                 Nature = Natures[nature],
                 Ability = ability,
@@ -1545,7 +1464,7 @@ namespace GameCubeRNG
             shadowDisplay.Add(new ShadowDisplay
             {
                 Frame = frame,
-                PID = pid.ToString("X"),
+                PID = pid,
                 Nature = Natures[nature],
                 Ability = ability,
                 Hp = hp,
@@ -2213,10 +2132,11 @@ namespace GameCubeRNG
         {
             return new String[]
             {
-                "Celebi",
+                "Gligar",
                 "Heracross",
                 "Makuhita",
-                "Murkrow"
+                "Murkrow",
+                "Ursaring"
             };
         }
 
@@ -2356,12 +2276,8 @@ namespace GameCubeRNG
             file.WriteLine(result);
             for (int x = 0; x < displayList.Count; x++)
             {
-                String seed = displayList[x].Seed;
-                while (seed.Length < 8)
-                    seed = "0" + seed;
-                String pid = displayList[x].PID;
-                while (pid.Length < 8)
-                    pid = "0" + pid;
+                String seed = displayList[x].Seed.ToString("X");
+                String pid = displayList[x].PID.ToString("X");
                 String temp = "" + seed + "\t" + pid + "\t" + displayList[x].Shiny + "\t" + displayList[x].Nature + "\t" + displayList[x].Ability + "\t" + displayList[x].Hp + "\t" + displayList[x].Atk + "\t" + displayList[x].Def + "\t" + displayList[x].SpA + "\t" + displayList[x].SpD + "\t" + displayList[x].Spe + "\t" + displayList[x].Hidden;
                 if (displayList[x].Hidden.Length < 8)
                     temp += "\t";
